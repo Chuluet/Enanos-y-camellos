@@ -1,0 +1,179 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'enanosycamellos'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(26)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    // Expone /actuator/health, que es lo que usa el healthcheck del compose para
+    // saber si la app ya terminó de arrancar (y no solo si el proceso existe).
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // Swagger / OpenAPI. La línea 3.x es la compatible con Spring Boot 4;
+    // la 2.x solo funciona con Spring Boot 3.
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    // Sin esto, los @WebMvcTest ni siquiera arrancan: la porción de contexto que
+    // levantan incluye la seguridad de OAuth2 pero no la configuración base que
+    // crea el HttpSecurity, y el contexto falla antes de correr ninguna prueba.
+    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+    testCompileOnly 'org.projectlombok:lombok'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
+    testImplementation 'org.springframework.boot:spring-boot-restclient'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // Al terminar los tests genera el reporte de cobertura automáticamente, así
+    // con un solo "./gradlew test" ya quedan las dos páginas HTML listas.
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+jacoco {
+    toolVersion = '0.8.14'
+}
+
+// Clases que no aportan nada al medir cobertura: son datos o arranque, no lógica.
+// Si las dejamos dentro, el porcentaje baja sin que haya nada real que testear.
+def coberturaExcluida = [
+        '**/EnanosycamellosApplication.class',
+        '**/config/**',
+        '**/dto/**',
+        '**/entity/**'
+]
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+
+    reports {
+        html.required = true   // la página que se abre en el navegador
+        xml.required = true    // formato que leen SonarQube / CI
+        csv.required = false
+    }
+
+    classDirectories.setFrom(
+            files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: coberturaExcluida)
+            })
+    )
+}
+
+// Falla el build si la cobertura baja del mínimo. Útil para que un cambio no
+// meta lógica nueva sin tests sin que nadie se dé cuenta.
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn tasks.named('jacocoTestReport')
+
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.70
+            }
+        }
+        rule {
+            element = 'CLASS'
+            // Los mappers/servicios sí deben tener sus ramas cubiertas.
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.50
+            }
+            excludes = ['com.example.enanosycamellos.EnanosycamellosApplication']
+        }
+    }
+
+    classDirectories.setFrom(
+            files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: coberturaExcluida)
+            })
+    )
+}
+
+// Engancha la verificación a "check" (y por tanto a "build"): si alguien mete
+// lógica nueva sin tests, el build falla en vez de pasar en silencio.
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+}
+
+// Tarea de conveniencia: corre los tests, arma los reportes y te dice dónde
+// quedaron. "./gradlew cobertura"
+tasks.register('cobertura') {
+    group = 'verification'
+    description = 'Corre los tests y genera los reportes HTML de tests y cobertura.'
+    dependsOn tasks.named('jacocoTestReport')
+
+    def reporteTests = layout.buildDirectory.file('reports/tests/test/index.html')
+    def reporteCobertura = layout.buildDirectory.file('reports/jacoco/test/html/index.html')
+
+    doLast {
+        println ''
+        println 'Reportes generados:'
+        println "  Tests     -> ${reporteTests.get().asFile.toURI()}"
+        println "  Cobertura -> ${reporteCobertura.get().asFile.toURI()}"
+        println ''
+    }
+}
+
+// Igual que "cobertura", pero además abre las dos páginas en el navegador.
+// "./gradlew coberturaAbrir"
+tasks.register('coberturaAbrir') {
+    group = 'verification'
+    description = 'Corre los tests, genera los reportes y los abre en el navegador.'
+    dependsOn tasks.named('cobertura')
+
+    def reportes = [
+            layout.buildDirectory.file('reports/tests/test/index.html'),
+            layout.buildDirectory.file('reports/jacoco/test/html/index.html')
+    ]
+    def so = System.getProperty('os.name').toLowerCase()
+
+    doLast {
+        def comando = so.contains('mac') ? 'open' : so.contains('win') ? 'explorer' : 'xdg-open'
+        reportes.each { reporte ->
+            // ProcessBuilder en vez de exec {}: Gradle 9 eliminó Project.exec().
+            new ProcessBuilder(comando, reporte.get().asFile.absolutePath).start().waitFor()
+        }
+    }
+}
+
+// El plugin de Spring Boot genera DOS jars: el ejecutable y uno "-plain" con
+// solo las clases. Eso rompía el Dockerfile, porque "COPY build/libs/*.jar
+// app.jar" encontraba dos archivos y Docker falla cuando el origen es múltiple
+// y el destino es un solo archivo.
+tasks.named('jar') {
+    enabled = false
+}
+
+// Nombre fijo del jar ejecutable: así el Dockerfile lo copia por nombre exacto
+// y no depende de la versión del proyecto.
+tasks.named('bootJar') {
+    archiveFileName = 'app.jar'
+}
