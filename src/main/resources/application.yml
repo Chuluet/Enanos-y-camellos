@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: enanosycamellos
+
+  # Si nadie define SPRING_PROFILES_ACTIVE, se usa "dev".
+  # El compose.yml lo pone en "docker".
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  jackson:
+    # No serializar campos en null: el JSON queda más limpio y es lo que hace
+    # que "validationErrors" solo aparezca en los errores de validación.
+    default-property-inclusion: non_null
+
+  # ================================ Base de datos ================================
+  # Las cinco variables (DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD) son
+  # las que pide el enunciado en la sección 10. Con los defaults de acá puedes
+  # correr la app en local sin Docker (contra un Postgres en localhost:5432),
+  # y el compose.yml sobreescribe esas variables para apuntar al contenedor.
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:enanosycamellos}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # "update" es cómodo mientras desarrollas: Hibernate crea/ajusta las tablas
+      # solo con tus entidades, sin correr el script SQL a mano. Antes de entregar,
+      # cámbialo a "validate" (o mejor, agrega Flyway/Liquibase como bonus) para
+      # que el esquema real sea el que tú controlas, no el que Hibernate adivina.
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    # Sin esto, una relación LAZY (como team.members) se puede cargar fuera de
+    # la transacción sin que te des cuenta, tapando el LazyInitializationException
+    # que deberías estar viendo en tests. Tus mappers ya asumen que todo pasa
+    # dentro de la transacción (@Transactional en el service), así que esto solo
+    # hace explícito lo que ya es cierto.
+    open-in-view: false
+
+  # ================================ Seguridad =================================
+  # Pendiente: acá va spring.security.oauth2.resourceserver.jwt (jwk-set-uri +
+  # issuer-uri) cuando conectes Keycloak. Hasta entonces, sin este bloque el
+  # backend NO exige autenticación en ningún endpoint — todo queda abierto.
+  # Antes de la entrega, esto tiene que estar resuelto: la sección 5 (Módulo 1)
+  # es el 15% de la nota.
+
+# ================================= Servidor ==================================
+# En local y en Docker no hay variable PORT, así que se usa el 8080 de siempre.
+# Render (y casi cualquier PaaS) asigna un puerto propio en la variable PORT y
+# espera que la app escuche ahí; si no, el despliegue queda "unhealthy" aunque
+# la app haya arrancado bien.
+server:
+  port: ${PORT:8080}
+
+# ============================= Swagger / OpenAPI =============================
+
+# ================================= Actuator ==================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
