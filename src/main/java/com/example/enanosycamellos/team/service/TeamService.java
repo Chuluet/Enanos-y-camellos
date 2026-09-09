@@ -6,6 +6,7 @@ import com.example.enanosycamellos.common.exceptions.ResourceNotFoundException;
 import com.example.enanosycamellos.competitor.entity.Competitor;
 import com.example.enanosycamellos.competitor.entity.CompetitorStatus;
 import com.example.enanosycamellos.competitor.repository.ICompetitorRepository;
+import com.example.enanosycamellos.team.dto.TeamPatchRequest;
 import com.example.enanosycamellos.team.dto.TeamRequest;
 import com.example.enanosycamellos.team.dto.TeamResponse;
 import com.example.enanosycamellos.team.dto.TeamUpdateRequest;
@@ -44,7 +45,7 @@ public class TeamService {
     /** All non-inactive teams, with members. */
     @Transactional(readOnly = true)
     public List<TeamResponse> getTeams() {
-        return teamRepository.findAllActiveWithMembers(TeamStatus.INACTIVE)
+        return teamRepository.findAllByStatusNot(TeamStatus.INACTIVE)
                 .stream()
                 .map(TeamMapper::toResponse)
                 .toList();
@@ -55,6 +56,11 @@ public class TeamService {
     public TeamResponse getById(UUID id) {
         Team team = teamRepository.findWithMembersById(id)
                 .orElseThrow(() -> ResourceNotFoundException.of("Team", id));
+
+        if (team.getStatus() == TeamStatus.INACTIVE) {
+            throw ResourceNotFoundException.of("Team", id);
+        }
+
         return TeamMapper.toResponse(team);
     }
 
@@ -85,11 +91,46 @@ public class TeamService {
     }
 
     /**
-     * Updates the team's own data. Fields in null are not touched
-     * (PATCH semantics). Members have separate endpoints.
+     * Full replace via PUT. Every editable field is mandatory (enforced by
+     * validation on {@link TeamUpdateRequest}), so there is no "isEmpty"
+     * check here — unlike {@link #patch}, a PUT with nothing to change
+     * doesn't make sense as a request. Members and statistics are untouched:
+     * members have their own endpoints, and the statistics belong to the
+     * Results module.
      */
     @Transactional
     public TeamResponse update(UUID id, TeamUpdateRequest request) {
+        Team team = teamRepository.findWithMembersById(id)
+                .orElseThrow(() -> ResourceNotFoundException.of("Team", id));
+
+        if (teamRepository.existsByNameIgnoreCaseAndIdNot(request.name(), id)) {
+            throw new ConflictException(
+                    "There is already another team named '%s'".formatted(request.name()));
+        }
+        if (request.maxMembers() < team.getMembers().size()) {
+            throw new ConflictException(
+                    "maxMembers (%d) cannot be less than the current member count (%d)"
+                            .formatted(request.maxMembers(), team.getMembers().size()));
+        }
+
+        team.setName(request.name());
+        team.setDescription(request.description());
+        team.setCoach(request.coach());
+        team.setMaxMembers(request.maxMembers());
+        team.setStatus(request.status());
+
+        Team updated = teamRepository.save(team);
+        log.info("Team updated (PUT) id={}", id);
+        return TeamMapper.toResponse(updated);
+    }
+
+    /**
+     * Partially updates the team (PATCH semantics): only fields sent
+     * (non-null) are changed. Complements {@link #update} (PUT, full
+     * replace). Members and statistics are not touched here either.
+     */
+    @Transactional
+    public TeamResponse patch(UUID id, TeamPatchRequest request) {
         if (request.isEmpty()) {
             throw new BadRequestException("The request has no fields to update");
         }
@@ -124,7 +165,7 @@ public class TeamService {
         }
 
         Team updated = teamRepository.save(team);
-        log.info("Team updated id={}", id);
+        log.info("Team patched id={}", id);
         return TeamMapper.toResponse(updated);
     }
 

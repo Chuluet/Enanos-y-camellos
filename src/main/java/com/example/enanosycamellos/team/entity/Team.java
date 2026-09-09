@@ -56,7 +56,12 @@ public class Team {
      * mappedBy = "team": cambios aquí no se persisten solos, hay que usar
      * addMember/removeMember para mantener ambos lados sincronizados.
      */
-    @OneToMany(mappedBy = "team", fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "team",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     @Builder.Default
     private List<Competitor> members = new ArrayList<>();
 
