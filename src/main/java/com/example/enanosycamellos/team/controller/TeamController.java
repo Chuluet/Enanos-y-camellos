@@ -5,6 +5,7 @@ import com.example.enanosycamellos.team.dto.TeamPatchRequest;
 import com.example.enanosycamellos.team.dto.TeamRequest;
 import com.example.enanosycamellos.team.dto.TeamResponse;
 import com.example.enanosycamellos.team.dto.TeamUpdateRequest;
+import com.example.enanosycamellos.team.entity.TeamStatus;
 import com.example.enanosycamellos.team.service.TeamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,10 +42,16 @@ public class TeamController {
     private final TeamService teamService;
 
     @GetMapping
-    @Operation(summary = "List teams", description = "Returns all non-inactive teams with their members.")
+    @Operation(
+            summary = "List teams",
+            description = "Returns teams with their members. Without filter, returns all non-inactive "
+                    + "teams; pass status to filter by an exact status instead (e.g. ?status=SUSPENDED)."
+    )
     @ApiResponse(responseCode = "200", description = "List obtained")
-    public ResponseEntity<List<TeamResponse>> getAllTeams() {
-        return ResponseEntity.ok(teamService.getTeams());
+    public ResponseEntity<List<TeamResponse>> getAllTeams(
+            @Parameter(description = "Filter by status") @RequestParam(required = false) TeamStatus status) {
+
+        return ResponseEntity.ok(teamService.getTeams(status));
     }
 
     @GetMapping("/{id}")

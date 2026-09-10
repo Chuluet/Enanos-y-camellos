@@ -42,11 +42,23 @@ public class TeamService {
 
     // ============================== Read ===============================
 
-    /** All non-inactive teams, with members. */
+    /**
+     * Team listing, optionally filtered by status.
+     *
+     * <p>No pagination here: unlike Module 2 (Competitors), the assignment
+     * only requires filtering/pagination/sorting for competitors, so teams
+     * stay as a plain list. Both branches fetch-join members in a single
+     * query, avoiding N+1 when mapping each team's member list. Without a
+     * filter, non-inactive teams are returned (same default as before);
+     * with a filter, an exact-status match is used instead.</p>
+     */
     @Transactional(readOnly = true)
-    public List<TeamResponse> getTeams() {
-        return teamRepository.findAllByStatusNot(TeamStatus.INACTIVE)
-                .stream()
+    public List<TeamResponse> getTeams(TeamStatus status) {
+        List<Team> teams = status != null
+                ? teamRepository.findAllWithMembers(status)
+                : teamRepository.findAllByStatusNotWithMembers(TeamStatus.INACTIVE);
+
+        return teams.stream()
                 .map(TeamMapper::toResponse)
                 .toList();
     }
