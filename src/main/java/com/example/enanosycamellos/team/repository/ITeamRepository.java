@@ -16,9 +16,15 @@ public interface ITeamRepository extends JpaRepository<Team, UUID> {
 
     boolean existsByNameIgnoreCaseAndIdNot(String name, UUID id);
 
-    /** Teams whose status is not the given one (e.g. exclude INACTIVE), used by getTeams(). */
-    List<Team> findAllByStatusNot(TeamStatus status);
+    /** A team with its members already loaded, in a single query. */
+    @Query("""
+        SELECT t FROM Team t
+        LEFT JOIN FETCH t.members
+        WHERE t.id = :id
+        """)
+    Optional<Team> findWithMembersById(@Param("id") UUID id);
 
+    /** Teams matching an exact status, with members already loaded. */
     @Query("""
         SELECT t FROM Team t
         LEFT JOIN FETCH t.members
@@ -27,11 +33,12 @@ public interface ITeamRepository extends JpaRepository<Team, UUID> {
         """)
     List<Team> findAllWithMembers(@Param("status") TeamStatus status);
 
-    /** A team with its members already loaded, in a single query. */
+    /** Teams whose status is not the given one (e.g. exclude INACTIVE), with members already loaded. */
     @Query("""
         SELECT t FROM Team t
         LEFT JOIN FETCH t.members
-        WHERE t.id = :id
+        WHERE t.status <> :status
+        ORDER BY t.name
         """)
-    Optional<Team> findWithMembersById(@Param("id") UUID id);
+    List<Team> findAllByStatusNotWithMembers(@Param("status") TeamStatus status);
 }

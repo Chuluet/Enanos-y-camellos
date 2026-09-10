@@ -12,41 +12,34 @@ spring:
     # que "validationErrors" solo aparezca en los errores de validación.
     default-property-inclusion: non_null
 
-  # ================================ Base de datos ================================
-  # Las cinco variables (DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD) son
-  # las que pide el enunciado en la sección 10. Con los defaults de acá puedes
-  # correr la app en local sin Docker (contra un Postgres en localhost:5432),
-  # y el compose.yml sobreescribe esas variables para apuntar al contenedor.
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:enanosycamellos}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
+  # ================================ Seguridad ================================
+  # La app valida tokens, no los emite. Estas dos URL son lo único que necesita
+  # para hacerlo, y son distintas a propósito:
+  #
+  #   jwk-set-uri: de dónde baja las llaves públicas para verificar la firma.
+  #                Dentro de Docker es la dirección interna (keycloak:8080), a
+  #                la que el navegador no llega pero el contenedor sí.
+  #   issuer-uri:  contra qué "iss" compara el token. Ese campo lo escribió
+  #                Keycloak con la dirección que usó el navegador al loguearse
+  #                (localhost:8180), así que tiene que ser esa y no la interna;
+  #                si no, todo token válido se rechaza.
+  #
+  # Los valores por defecto son para correr la app fuera de Docker (perfil dev)
+  # contra el Keycloak del compose: docker compose up -d keycloak
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_JWKS_URI:http://localhost:8180/realms/enanosycamellos/protocol/openid-connect/certs}
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/enanosycamellos}
 
-  jpa:
-    hibernate:
-      # "update" es cómodo mientras desarrollas: Hibernate crea/ajusta las tablas
-      # solo con tus entidades, sin correr el script SQL a mano. Antes de entregar,
-      # cámbialo a "validate" (o mejor, agrega Flyway/Liquibase como bonus) para
-      # que el esquema real sea el que tú controlas, no el que Hibernate adivina.
-      ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-    # Sin esto, una relación LAZY (como team.members) se puede cargar fuera de
-    # la transacción sin que te des cuenta, tapando el LazyInitializationException
-    # que deberías estar viendo en tests. Tus mappers ya asumen que todo pasa
-    # dentro de la transacción (@Transactional en el service), así que esto solo
-    # hace explícito lo que ya es cierto.
-    open-in-view: false
-
-  # ================================ Seguridad =================================
-  # Pendiente: acá va spring.security.oauth2.resourceserver.jwt (jwk-set-uri +
-  # issuer-uri) cuando conectes Keycloak. Hasta entonces, sin este bloque el
-  # backend NO exige autenticación en ningún endpoint — todo queda abierto.
-  # Antes de la entrega, esto tiene que estar resuelto: la sección 5 (Módulo 1)
-  # es el 15% de la nota.
+# =============================== Keycloak ====================================
+# Dirección pública de Keycloak (la que ve el navegador). No la usa la seguridad
+# de la app, sino OpenApiConfig, para saber a dónde mandar al usuario cuando
+# aprieta "Authorize" en Swagger.
+keycloak:
+  public-url: ${KEYCLOAK_PUBLIC_URL:http://localhost:8180}
+  realm: enanosycamellos
 
 # ================================= Servidor ==================================
 # En local y en Docker no hay variable PORT, así que se usa el 8080 de siempre.
@@ -57,8 +50,34 @@ server:
   port: ${PORT:8080}
 
 # ============================= Swagger / OpenAPI =============================
+# Con springdoc no hay que escribir nada del contrato a mano: lo arma leyendo
+# los controllers y los DTO. Acá solo se configura dónde queda publicado.
+#
+#   Interfaz visual : http://localhost:8080/swagger-ui.html
+#   JSON del contrato: http://localhost:8080/v3/api-docs
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    # Ordena las operaciones por verbo HTTP y los grupos alfabéticamente,
+    # en vez del orden aleatorio en que Spring registra los métodos.
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    # Deja los grupos plegados al abrir la página: con 3 recursos y ~18
+    # endpoints, desplegado no se ve nada.
+    doc-expansion: none
+    # Botón "Authorize": manda al login de Keycloak y guarda el token para las
+    # llamadas siguientes. El cliente es público (no lleva secreto), así que usa
+    # PKCE, que es lo que evita que alguien intercepte el código de autorización.
+    oauth:
+      client-id: enanosycamellos-swagger
+      use-pkce-with-authorization-code-grant: true
 
 # ================================= Actuator ==================================
+# Solo se expone /actuator/health. El resto de endpoints (env, beans, mappings)
+# muestran configuración interna y no tienen por qué estar publicados.
 management:
   endpoints:
     web:

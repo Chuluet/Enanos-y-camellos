@@ -82,6 +82,8 @@ services:
         # No arranca la app hasta que el healthcheck de Postgres pase. Sin esto,
         # la app arrancaría contra una base que todavía no acepta conexiones.
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
 
     environment:
       # Activa el perfil "docker" -> carga application.yml + application-docker.yml
@@ -99,6 +101,63 @@ services:
       # datos. Es lo que permite agregar un campo, hacer down y up, y verlo
       # reflejado en la base.
       - DDL_AUTO=update
+      - KEYCLOAK_JWKS_URI=http://keycloak:8080/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
+      - KEYCLOAK_ISSUER_URI=http://localhost:${KEYCLOAK_PORT:-8180}/realms/${KEYCLOAK_REALM}
+      - KEYCLOAK_PUBLIC_URL=http://localhost:${KEYCLOAK_PORT:-8180}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    container_name: enanosycamellos-keycloak
+    restart: unless-stopped
+    command: ["start-dev","--import-realm"]
+    environment:
+      # Usuario de la consola de administración (http://localhost:8180/admin),
+      # no de la API. Los usuarios de la API vienen en el realm importado.
+      - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USER}
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+
+      # Dirección pública: es la que Keycloak pone como emisor en los tokens y
+      # en los enlaces del login. Si no coincide con KEYCLOAK_ISSUER_URI de
+      # arriba, la app rechaza todos los tokens con un 401.
+      - KC_HOSTNAME=http://localhost:${KEYCLOAK_PORT:-8180}
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    ports:
+      - "${KEYCLOAK_PORT:-8180}:8080"
+    volumes:
+      # De acá lee el realm al arrancar (usuarios, roles y cliente de Swagger).
+      # :ro = solo lectura, el contenedor no tiene por qué poder modificar un
+      # archivo del repo.
+      #
+      # Ese JSON trae "sslRequired": "none", y no es un descuido: Keycloak
+      # exige HTTPS a todo lo que no venga de 127.0.0.1, y a través de Docker
+      # las peticiones llegan con la IP de la red interna. Sin esa línea, el
+      # login y el endpoint de token responden "HTTPS required". Vale para
+      # desarrollo; en producción se pone un certificado de verdad.
+      #
+      # Ojo también: el JSON no admite comentarios ni campos inventados. Si le
+      # agregás una clave que Keycloak no conoce, la importación falla entera
+      # y el contenedor queda "unhealthy".
+      #
+      # IMPORTANTE: el nombre del realm (KEYCLOAK_REALM) y el client id
+      # (KEYCLOAK_CLIENT_ID) ahora viven en .env, pero el CONTENIDO del JSON
+      # de realm importado (./keycloak/*.json) sigue teniendo esos mismos
+      # valores hardcodeados adentro — Keycloak no lee variables de entorno
+      # dentro del JSON de importación. Si cambiás KEYCLOAK_REALM o
+      # KEYCLOAK_CLIENT_ID en .env, tenés que actualizar el JSON a mano para
+      # que coincidan, o el login va a fallar con "realm not found" o el
+      # cliente no va a existir.
+      - ./keycloak:/opt/keycloak/data/import:ro
+    healthcheck:
+      # La imagen de Keycloak no trae curl ni wget, así que se usa el truco de
+      # abrir un socket con el /dev/tcp de bash contra su endpoint de salud.
+      test: [ "CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '\"status\": \"UP\"'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   db:
     image: postgres:15-alpine
