@@ -1,0 +1,115 @@
+{
+  "realm": "enanosycamellos",
+  "enabled": true,
+  "sslRequired": "none",
+
+  "accessTokenLifespan": 1800,
+  "ssoSessionIdleTimeout": 3600,
+
+  "roles": {
+    "realm": [
+      {
+        "name": "administrator",
+        "description": "Manage users, competitors, teams, races,registrations, results and audit records"
+      },
+      {
+        "name": "race_organizer",
+        "description": "Manage races, registrations and results; view competitors and teams."
+      },
+      {
+        "name": "viewer",
+        "description": "Read public information, schedules, results and standings only"
+      }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "enanosycamellos-swagger",
+      "name": "enanosycamellos (Swagger y pagina de ayuda)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8080/*",
+        "http://localhost:8081/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080",
+        "http://localhost:8081"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Elsuperadmin",
+      "email": "admin@enanosycamellos.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "administrator",
+        "race_organizer",
+        "viewer"
+      ]
+    },
+    {
+      "username": "organizer",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "org",
+      "lastName": "anizer",
+      "email": "organizer@enanosycamellos.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "organizer123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "race_organizer",
+        "viewer"
+      ]
+    },
+    {
+      "username": "viewer",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "viewer",
+      "lastName": "ahorasi",
+      "email": "viewer@enanosycamellos.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "viewer123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "viewer"
+      ]
+    }
+  ]
+}

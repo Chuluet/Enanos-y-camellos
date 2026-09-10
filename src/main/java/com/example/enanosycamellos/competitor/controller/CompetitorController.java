@@ -22,6 +22,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -52,6 +53,15 @@ public class CompetitorController {
             Pageable pageable) {
 
         return ResponseEntity.ok(competitorService.getCompetitors(status, competitorType, pageable));
+    }
+    @GetMapping("/all")
+    @Operation(
+            summary = "List competitors",
+            description = "Returns all competitors."
+    )
+    @ApiResponse(responseCode = "200", description = "List obtained")
+    public ResponseEntity<List<CompetitorResponse>> getAllCompetitors() {
+        return ResponseEntity.ok(competitorService.getAll());
     }
 
     @GetMapping("/{id}")

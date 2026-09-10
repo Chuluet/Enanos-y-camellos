@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -60,6 +61,13 @@ public class CompetitorService {
         }
 
         return page.map(CompetitorMapper::toResponse);
+    }
+    @Transactional(readOnly = true)
+    public List<CompetitorResponse> getAll() {
+        return competitorRepository.findAll()
+                .stream()
+                .map(CompetitorMapper::toResponse)
+                .toList();
     }
 
     /** A competitor by id, with its team. Throws 404 if not found. */
