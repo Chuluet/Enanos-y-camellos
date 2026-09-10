@@ -53,19 +53,34 @@ class TeamServiceTest {
     class GetTeams {
 
         @Test
-        @DisplayName("returns all non-inactive teams")
-        void returnsAllNonInactive() {
+        @DisplayName("without filter, returns all non-inactive teams")
+        void withoutFilter_returnsAllNonInactive() {
             Team team = buildTeam("The Five Exceptions");
-            when(teamRepository.findAllByStatusNot(TeamStatus.INACTIVE))
+            when(teamRepository.findAllByStatusNotWithMembers(TeamStatus.INACTIVE))
                     .thenReturn(List.of(team));
 
-            List<TeamResponse> result = teamService.getTeams();
+            List<TeamResponse> result = teamService.getTeams(null);
 
             assertEquals(1, result.size());
             assertEquals("The Five Exceptions", result.getFirst().name());
+            verify(teamRepository, never()).findAllWithMembers(any());
+        }
+
+        @Test
+        @DisplayName("with filter, returns teams matching that exact status")
+        void withFilter_returnsExactStatusMatch() {
+            Team team = buildTeam("Suspended Team");
+            team.setStatus(TeamStatus.SUSPENDED);
+            when(teamRepository.findAllWithMembers(TeamStatus.SUSPENDED))
+                    .thenReturn(List.of(team));
+
+            List<TeamResponse> result = teamService.getTeams(TeamStatus.SUSPENDED);
+
+            assertEquals(1, result.size());
+            assertEquals(TeamStatus.SUSPENDED, result.getFirst().status());
+            verify(teamRepository, never()).findAllByStatusNotWithMembers(any());
         }
     }
-
     @Nested
     @DisplayName("getById")
     class GetById {

@@ -59,17 +59,31 @@ class TeamControllerIntegrationTest {
     class GetAllTeams {
 
         @Test
-        @DisplayName("returns 200 OK and a list of teams")
+        @DisplayName("without filter, returns 200 OK and a list of teams")
         void returnsOkAndList() throws Exception {
             TeamResponse response = buildTeamResponse(UUID.randomUUID(), "The Five Exceptions", List.of());
-            when(teamService.getTeams()).thenReturn(List.of(response));
+            when(teamService.getTeams(null)).thenReturn(List.of(response));
 
             mockMvc.perform(get("/api/teams")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$[0].name").value("The Five Exceptions"));
 
-            verify(teamService).getTeams();
+            verify(teamService).getTeams(null);
+        }
+
+        @Test
+        @DisplayName("with status filter, passes it through to the service")
+        void returnsOkWithStatusFilter() throws Exception {
+            TeamResponse response = buildTeamResponse(UUID.randomUUID(), "Suspended Team", List.of());
+            when(teamService.getTeams(TeamStatus.SUSPENDED)).thenReturn(List.of(response));
+
+            mockMvc.perform(get("/api/teams").param("status", "SUSPENDED")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].name").value("Suspended Team"));
+
+            verify(teamService).getTeams(TeamStatus.SUSPENDED);
         }
     }
 

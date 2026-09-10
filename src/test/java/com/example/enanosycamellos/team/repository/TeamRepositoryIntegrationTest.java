@@ -96,4 +96,13 @@ public class TeamRepositoryIntegrationTest {
 
         assertFalse(exists);
     }
+    @Test
+    @DisplayName("findAllByStatusNotWithMembers excludes the given status")
+    void findAllByStatusNotWithMembers_excludesGivenStatus() {
+        List<Team> result = teamRepository.findAllByStatusNotWithMembers(TeamStatus.INACTIVE);
+
+        assertEquals(1, result.size());
+        assertEquals("The Five Exceptions", result.getFirst().getName());
+        assertEquals(2, result.getFirst().getMembers().size());
+    }
 }
