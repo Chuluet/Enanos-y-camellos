@@ -1,5 +1,6 @@
 package com.example.enanosycamellos.registration.service;
 
+import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import com.example.enanosycamellos.common.exceptions.BadRequestException;
 import com.example.enanosycamellos.common.exceptions.ConflictException;
 import com.example.enanosycamellos.common.exceptions.ResourceNotFoundException;
@@ -46,6 +47,7 @@ public class RegistrationService {
     private final IRaceRepository raceRepository;
     private final ICompetitorRepository competitorRepository;
     private final ITeamRepository teamRepository;
+    private final AuditLogService auditLogService;
 
     // ============================== Read ===============================
 
@@ -71,7 +73,8 @@ public class RegistrationService {
         return registrationRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.of("Registration", id));
     }
-        // ============================= Write ==============================
+
+    // ============================= Write ==============================
 
     @Transactional
     public RaceRegistrationResponse register(UUID raceId, RaceRegistrationRequest request) {
@@ -91,6 +94,11 @@ public class RegistrationService {
         validateStartingPositionIsAvailable(raceId, request.startingPosition());
 
         RaceRegistration saved = registrationRepository.save(registration);
+
+        auditLogService.log("CREATE", "Registration", saved.getId().toString(),
+                "%s registration created for race %s".formatted(
+                        request.isIndividual() ? "Individual" : "Team", raceId));
+
         log.info("Registration created id={} race={} type={}",
                 saved.getId(), raceId, request.isIndividual() ? "INDIVIDUAL" : "TEAM");
         return RegistrationMapper.toResponse(saved);
@@ -187,7 +195,7 @@ public class RegistrationService {
                     "Starting position %d is already taken in this race".formatted(startingPosition));
         }
     }
-    
+
     @Transactional
     public RaceRegistrationResponse approve(UUID id) {
         RaceRegistration registration = findRegistrationOrThrow(id);
@@ -200,6 +208,9 @@ public class RegistrationService {
 
         registration.setStatus(RegistrationStatus.APPROVED);
         RaceRegistration saved = registrationRepository.save(registration);
+
+        auditLogService.log("APPROVE", "Registration", id.toString(), "Registration approved");
+
         log.info("Registration id={} approved", id);
         return RegistrationMapper.toResponse(saved);
     }
@@ -217,6 +228,10 @@ public class RegistrationService {
         registration.setStatus(RegistrationStatus.REJECTED);
         registration.setValidationNotes(reason);
         RaceRegistration saved = registrationRepository.save(registration);
+
+        auditLogService.log("REJECT", "Registration", id.toString(),
+                "Registration rejected: %s".formatted(reason));
+
         log.info("Registration id={} rejected: {}", id, reason);
         return RegistrationMapper.toResponse(saved);
     }
@@ -233,7 +248,9 @@ public class RegistrationService {
 
         registration.setStatus(RegistrationStatus.CANCELLED);
         registrationRepository.save(registration);
+
+        auditLogService.log("CANCEL", "Registration", id.toString(), "Registration cancelled");
+
         log.info("Registration id={} cancelled", id);
     }
-    
 }

@@ -33,6 +33,9 @@ class RaceServiceTest {
     @Mock
     private IRaceRepository raceRepository;
 
+    @Mock
+    private com.example.enanosycamellos.auditlog.service.AuditLogService auditLogService;
+
     @InjectMocks
     private RaceService raceService;
 

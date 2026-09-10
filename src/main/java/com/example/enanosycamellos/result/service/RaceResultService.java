@@ -1,5 +1,6 @@
 package com.example.enanosycamellos.result.service;
 
+import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import com.example.enanosycamellos.common.exceptions.BadRequestException;
 import com.example.enanosycamellos.common.exceptions.ConflictException;
 import com.example.enanosycamellos.common.exceptions.ResourceNotFoundException;
@@ -43,6 +44,7 @@ public class RaceResultService {
     private final IRaceRepository raceRepository;
     private final ICompetitorRepository competitorRepository;
     private final ITeamRepository teamRepository;
+    private final AuditLogService auditLogService;
 
     // ============================== Read ===============================
 
@@ -91,11 +93,14 @@ public class RaceResultService {
         RaceResult saved = resultRepository.save(result);
         applyStatistics(registration, request.status(), request.finalPosition(), 1);
 
+        auditLogService.log("RECORD", "Result", saved.getId().toString(),
+                "Result recorded for registration %s: %s".formatted(registration.getId(), request.status()));
+
         log.info("Result recorded id={} registration={} status={}",
                 saved.getId(), registration.getId(), request.status());
         return RaceResultMapper.toResponse(saved);
     }
-    
+
     @Transactional
     public RaceResultResponse update(UUID id, RaceResultUpdateRequest request) {
         if (!request.isCompletionTimeConsistentWithStatus()) {
@@ -111,6 +116,9 @@ public class RaceResultService {
         validateRaceIsInProgress(registration.getRace());
         validatePositionIsAvailable(registration.getRace().getId(), request.finalPosition(), id);
 
+        String oldStatus = result.getStatus().toString();
+        Integer oldFinalPosition = result.getFinalPosition();
+
         // Undo the stats this result had applied before, so we never double-count.
         applyStatistics(registration, result.getStatus(), result.getFinalPosition(), -1);
 
@@ -125,6 +133,10 @@ public class RaceResultService {
 
         RaceResult saved = resultRepository.save(result);
         applyStatistics(registration, request.status(), request.finalPosition(), 1);
+
+        auditLogService.log("UPDATE", "Result", id.toString(),
+                "Result updated", oldStatus + "/" + oldFinalPosition,
+                request.status() + "/" + request.finalPosition());
 
         log.info("Result id={} updated, new status={}", id, request.status());
         return RaceResultMapper.toResponse(saved);
