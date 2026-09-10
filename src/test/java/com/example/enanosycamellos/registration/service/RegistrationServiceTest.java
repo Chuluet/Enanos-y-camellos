@@ -44,6 +44,7 @@ class RegistrationServiceTest {
     @Mock private IRaceRepository raceRepository;
     @Mock private ICompetitorRepository competitorRepository;
     @Mock private ITeamRepository teamRepository;
+    @Mock private com.example.enanosycamellos.auditlog.service.AuditLogService auditLogService;
 
     @InjectMocks
     private RegistrationService registrationService;
