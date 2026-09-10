@@ -10,6 +10,7 @@ import com.example.enanosycamellos.race.entity.Race;
 import com.example.enanosycamellos.race.entity.RaceStatus;
 import com.example.enanosycamellos.race.entity.RaceType;
 import com.example.enanosycamellos.race.mapper.RaceMapper;
+import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import com.example.enanosycamellos.race.repository.IRaceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ import java.util.UUID;
 public class RaceService {
 
     private final IRaceRepository raceRepository;
+     private final AuditLogService auditLogService;
 
     private static final Map<RaceStatus, Set<RaceStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(RaceStatus.class);
 
@@ -77,6 +79,8 @@ public class RaceService {
         Race race = RaceMapper.toEntity(request);
         Race saved = raceRepository.save(race);
 
+        auditLogService.log("CREATE", "Race", saved.getId().toString(),
+                "Race '%s' created".formatted(saved.getName()));
         log.info("Race created id={} name={} type={}", saved.getId(), saved.getName(), saved.getRaceType());
         return RaceMapper.toResponse(saved);
     }
@@ -113,6 +117,7 @@ public class RaceService {
         if (request.registrationDeadline() != null) race.setRegistrationDeadline(request.registrationDeadline());
 
         Race updated = raceRepository.save(race);
+        auditLogService.log("UPDATE", "Race", id.toString(), "Race data updated");
         log.info("Race updated id={}", id);
         return RaceMapper.toResponse(updated);
     }
@@ -145,6 +150,12 @@ public class RaceService {
 
         race.setStatus(newStatus);
         Race saved = raceRepository.save(race);
+
+        String action = newStatus == RaceStatus.CANCELLED ? "CANCEL" : "STATUS_CHANGE";
+        auditLogService.log(action, "Race", id.toString(),
+                "Race status changed from %s to %s".formatted(current, newStatus),
+                current, newStatus);
+                
         log.info("Race id={} moved from {} to {}", id, current, newStatus);
         return RaceMapper.toResponse(saved);
     }
