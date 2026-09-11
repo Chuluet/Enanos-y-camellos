@@ -3,7 +3,7 @@ package com.example.enanosycamellos.result.dto;
 import com.example.enanosycamellos.result.entity.ResultStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 @Schema(description = "Data to record a race result for an approved registration")
@@ -43,11 +43,13 @@ public record RaceResultRequest(
 ) {
 
     /** "Completion time must be positive" only really applies once someone finished. */
+    @JsonIgnore
     public boolean isCompletionTimeConsistentWithStatus() {
         return status != ResultStatus.FINISHED || (completionTime != null && completionTime > 0);
     }
 
     /** A disqualified/DNF/DNS participant never gets a final position. */
+    @JsonIgnore
     public boolean isFinalPositionConsistentWithStatus() {
         return status == ResultStatus.FINISHED || finalPosition == null;
     }

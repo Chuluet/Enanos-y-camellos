@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.UUID;
 
 @Schema(description = "Data to register a competitor or a team for a race. "
@@ -31,7 +31,8 @@ public record RaceRegistrationRequest(
     public boolean hasExactlyOneParticipant() {
         return (competitorId != null) ^ (teamId != null);
     }
-
+    
+    @JsonIgnore
     public boolean isIndividual() {
         return competitorId != null;
     }
