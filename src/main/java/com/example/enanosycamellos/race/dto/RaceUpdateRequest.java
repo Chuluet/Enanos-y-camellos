@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @Schema(description = "Fields to modify of a race. Those not sent are left unchanged. "
@@ -36,7 +36,7 @@ public record RaceUpdateRequest(
         @Future(message = "registrationDeadline must be in the future")
         LocalDateTime registrationDeadline
 ) {
-
+    @JsonIgnore    
     public boolean isEmpty() {
         return name == null
                 && description == null
