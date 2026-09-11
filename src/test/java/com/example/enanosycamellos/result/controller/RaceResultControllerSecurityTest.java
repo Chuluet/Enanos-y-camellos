@@ -1,6 +1,9 @@
 package com.example.enanosycamellos.result.controller;
 
 import com.example.enanosycamellos.common.config.SecurityConfig;
+import com.example.enanosycamellos.common.config.RestAccessDeniedHandler;
+import com.example.enanosycamellos.common.config.RestAuthenticationEntryPoint;
+import com.example.enanosycamellos.common.config.JacksonConfig;
 import com.example.enanosycamellos.competitor.dto.CompetitorSummaryResponse;
 import com.example.enanosycamellos.competitor.entity.CompetitorStatus;
 import com.example.enanosycamellos.competitor.entity.CompetitorType;
@@ -30,7 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RaceResultController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, RestAccessDeniedHandler.class, RestAuthenticationEntryPoint.class, JacksonConfig.class})
 class RaceResultControllerSecurityTest {
 
     @Autowired

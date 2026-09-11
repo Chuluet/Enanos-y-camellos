@@ -49,7 +49,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationConverter jwtAuthenticationConverter)
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            RestAccessDeniedHandler restAccessDeniedHandler,
+            RestAuthenticationEntryPoint restAuthenticationEntryPoint)
             throws Exception {
 
         return http
@@ -80,6 +82,10 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated())
 
+                .exceptionHandling(handling -> handling
+                        .accessDeniedHandler(restAccessDeniedHandler)
+                        .authenticationEntryPoint(restAuthenticationEntryPoint))   
+                                    
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .jwtAuthenticationConverter(
