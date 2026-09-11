@@ -1,6 +1,9 @@
 package com.example.enanosycamellos.race.controller;
 
 import com.example.enanosycamellos.common.config.SecurityConfig;
+import com.example.enanosycamellos.common.config.RestAccessDeniedHandler;
+import com.example.enanosycamellos.common.config.RestAuthenticationEntryPoint;
+import com.example.enanosycamellos.common.config.JacksonConfig;
 import com.example.enanosycamellos.race.dto.RaceRequest;
 import com.example.enanosycamellos.race.dto.RaceResponse;
 import com.example.enanosycamellos.race.entity.RaceStatus;
@@ -35,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * running Keycloak instance needed.</p>
  */
 @WebMvcTest(RaceController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, RestAccessDeniedHandler.class, RestAuthenticationEntryPoint.class, JacksonConfig.class})
 class RaceControllerSecurityTest {
 
     @Autowired

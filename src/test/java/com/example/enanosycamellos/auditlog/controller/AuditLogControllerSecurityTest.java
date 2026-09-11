@@ -2,6 +2,9 @@ package com.example.enanosycamellos.auditlog.controller;
 
 import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import com.example.enanosycamellos.common.config.SecurityConfig;
+import com.example.enanosycamellos.common.config.JacksonConfig;
+import com.example.enanosycamellos.common.config.RestAccessDeniedHandler;
+import com.example.enanosycamellos.common.config.RestAuthenticationEntryPoint;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -17,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuditLogController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, RestAccessDeniedHandler.class, RestAuthenticationEntryPoint.class, JacksonConfig.class})
 class AuditLogControllerSecurityTest {
 
     @Autowired
