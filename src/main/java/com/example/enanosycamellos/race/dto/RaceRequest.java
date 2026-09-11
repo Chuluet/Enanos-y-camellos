@@ -3,7 +3,7 @@ package com.example.enanosycamellos.race.dto;
 import com.example.enanosycamellos.race.entity.RaceType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @Schema(description = "Data to create a race")
@@ -47,7 +47,7 @@ public record RaceRequest(
         @Future(message = "registrationDeadline must be in the future")
         LocalDateTime registrationDeadline
 ) {
-
+    @JsonIgnore
     public boolean isDeadlineBeforeStart() {
         return registrationDeadline != null
                 && scheduledDateTime != null
