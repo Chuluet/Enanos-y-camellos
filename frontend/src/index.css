@@ -1,111 +1,265 @@
+/* ============================== Design tokens ============================== */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --track: #241D14;
+  --sand: #E4D3AA;
+  --sand-light: #F0E4C8;
+  --rust: #C1441E;
+  --rust-dark: #9E3417;
+  --gold: #B8842A;
+  --oasis: #3B6E5E;
+  --stone: #8A8168;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --color-white: #ffffff;
+  --color-border: rgba(36, 29, 20, 0.12);
+  --color-border-strong: rgba(36, 29, 20, 0.2);
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --radius-sm: 6px;
+  --radius-md: 10px;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --font-display: "Archivo Black", sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
+  font-family: var(--font-body);
+  background: var(--sand);
+  color: var(--track);
+  line-height: 1.5;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
+h1, h2, h3 {
+  font-family: var(--font-display);
+  margin: 0 0 var(--space-2);
+  color: var(--track);
+  letter-spacing: -0.01em;
+}
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1.1rem; }
+h3 { font-size: 0.95rem; }
+
+a { color: var(--rust-dark); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ============================== App shell (sidebar layout) ============================== */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--track);
+  color: var(--sand-light);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-3);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.app-brand {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1.25;
+  color: var(--sand);
+  margin-bottom: var(--space-6);
+  padding: 0 var(--space-2);
+}
+
+.app-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.app-nav a, .app-nav .app-nav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--stone);
+  font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-h);
+  text-decoration: none;
+}
+.app-nav a:hover { background: rgba(228, 211, 170, 0.08); text-decoration: none; }
+.app-nav a.active {
+  background: rgba(228, 211, 170, 0.14);
+  color: var(--sand-light);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+.app-user {
+  border-top: 1px solid rgba(228, 211, 170, 0.15);
+  padding-top: var(--space-3);
+  font-size: 0.75rem;
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+.app-user__name { font-weight: 600; color: var(--sand-light); display: block; }
+.app-user__role { color: var(--stone); display: block; margin-bottom: var(--space-3); }
+.app-user button {
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(228, 211, 170, 0.25);
+  color: var(--sand-light);
 }
-p {
-  margin: 0;
+.app-user button:hover { background: rgba(228, 211, 170, 0.08); }
+
+.app-content {
+  flex: 1;
+  padding: var(--space-6) var(--space-6);
+  min-width: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.app-content__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-1);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.app-content__subtitle {
+  font-size: 0.8rem;
+  color: var(--track);
+  opacity: 0.55;
+  margin-bottom: var(--space-5);
 }
+
+/* ============================== Buttons ============================== */
+button, .btn {
+  font: inherit;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+button:hover, .btn:hover { filter: brightness(0.95); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary { background: var(--rust); color: var(--color-white); }
+.btn-secondary { background: var(--color-white); color: var(--track); border: 1px solid var(--color-border-strong); }
+.btn-danger { background: var(--rust-dark); color: var(--color-white); }
+
+/* ============================== Heat-sheet list (used for races, registrations, results) ============================== */
+.sheet {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-1);
+  border-top: 1px solid var(--color-border);
+}
+.sheet-row:last-child { border-bottom: 1px solid var(--color-border); }
+
+.sheet-row__index {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--track);
+  opacity: 0.2;
+  width: 28px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.sheet-row__stripe {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.sheet-row__body { flex: 1; min-width: 0; }
+
+.sheet-row__title { font-weight: 700; font-size: 0.95rem; color: var(--track); }
+
+.sheet-row__meta {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--track);
+  opacity: 0.55;
+  flex-wrap: wrap;
+}
+
+.sheet-row__status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* Status color roles — shared meaning across the whole app */
+.status-oasis { color: var(--oasis); }
+.status-gold { color: var(--gold); }
+.status-stone { color: var(--stone); }
+.status-rust { color: var(--rust); }
+.stripe-oasis { background: var(--oasis); }
+.stripe-gold { background: var(--gold); }
+.stripe-stone { background: var(--stone); }
+.stripe-rust { background: var(--rust); }
+
+/* ============================== States: loading / empty / error ============================== */
+.state-box {
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--track);
+  opacity: 0.6;
+}
+.state-box--error {
+  background: rgba(193, 68, 30, 0.08);
+  color: var(--rust-dark);
+  border-radius: var(--radius-md);
+  opacity: 1;
+}
+
+.spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--rust);
+  border-radius: 50%;
+  margin: 0 auto var(--space-3);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================== Forms ============================== */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+.form-field label { font-weight: 600; font-size: 0.85rem; }
+.form-field input,
+.form-field select,
+.form-field textarea {
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+}
+.form-field .field-error { color: var(--rust-dark); font-size: 0.75rem; }
