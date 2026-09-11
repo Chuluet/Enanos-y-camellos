@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -59,6 +60,7 @@ public class RaceController {
         return ResponseEntity.ok(raceService.getById(id));
     }
 
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @PostMapping
     @Operation(summary = "Create a race", description = "Always starts in DRAFT status.")
     @ApiResponses({
@@ -72,7 +74,7 @@ public class RaceController {
                 .created(URI.create("/api/races/" + created.id()))
                 .body(created);
     }
-
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @PutMapping("/{id}")
     @Operation(summary = "Modify a race")
     @ApiResponses({
@@ -90,7 +92,7 @@ public class RaceController {
 
         return ResponseEntity.ok(raceService.update(id, request));
     }
-
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @PatchMapping("/{id}/status")
     @Operation(summary = "Change a race's status")
     @ApiResponses({
@@ -107,6 +109,7 @@ public class RaceController {
         return ResponseEntity.ok(raceService.changeStatus(id, request.status()));
     }
 
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @DeleteMapping("/{id}")
     @Operation(summary = "Cancel a race", description = "Sets status to CANCELLED, does not delete the row.")
     @ApiResponses({

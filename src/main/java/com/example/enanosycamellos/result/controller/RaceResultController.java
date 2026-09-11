@@ -13,8 +13,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +48,7 @@ public class RaceResultController {
         return ResponseEntity.ok(resultService.getByRace(raceId));
     }
 
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @PostMapping("/api/races/{raceId}/results")
     @Operation(summary = "Record a result for an approved registration")
     @ApiResponses({
@@ -81,7 +85,8 @@ public class RaceResultController {
 
         return ResponseEntity.ok(resultService.getById(id));
     }
-
+    
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @PutMapping("/api/results/{id}")
     @Operation(summary = "Fully replace a result's mutable data", description = "Also re-syncs stats consistently.")
     @ApiResponses({

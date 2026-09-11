@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
@@ -34,6 +35,7 @@ import java.util.Map;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private static final String[] RUTAS_PUBLICAS = {
@@ -73,7 +75,7 @@ public class SecurityConfig {
 
                         // Escritura: solamente administrator.
                         .requestMatchers("/api/**")
-                        .hasRole("ADMINISTRATOR")
+                        .hasAnyRole("RACE_ORGANIZER", "ADMINISTRATOR")
 
                         .anyRequest()
                         .authenticated())

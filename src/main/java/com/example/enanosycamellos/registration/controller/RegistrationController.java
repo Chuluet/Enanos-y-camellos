@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +45,7 @@ public class RegistrationController {
 
         return ResponseEntity.ok(registrationService.getByRace(raceId));
     }
-
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @PostMapping("/api/races/{raceId}/registrations")
     @Operation(summary = "Register a competitor or a team for a race")
     @ApiResponses({
@@ -79,6 +80,7 @@ public class RegistrationController {
         return ResponseEntity.ok(registrationService.getById(id));
     }
 
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @PatchMapping("/api/registrations/{id}/approve")
     @Operation(summary = "Approve a pending registration")
     @ApiResponses({
@@ -94,6 +96,7 @@ public class RegistrationController {
         return ResponseEntity.ok(registrationService.approve(id));
     }
 
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @PatchMapping("/api/registrations/{id}/reject")
     @Operation(summary = "Reject a pending registration", description = "Requires a reason.")
     @ApiResponses({
@@ -112,6 +115,7 @@ public class RegistrationController {
         return ResponseEntity.ok(registrationService.reject(id, request.reason()));
     }
 
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'RACE_ORGANIZER')")
     @DeleteMapping("/api/registrations/{id}")
     @Operation(summary = "Cancel a registration", description = "Sets status to CANCELLED, does not delete the row.")
     @ApiResponses({
