@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -61,6 +62,17 @@ public class GlobalExceptionHandler {
 
         log.warn("409 in {}: {}", request.getRequestURI(), e.getMessage());
         return build(HttpStatus.CONFLICT, e.getMessage(), request);
+    }
+    
+    /** 403: authenticated user doesn't have the required role for this action. */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException e, HttpServletRequest request) {
+
+        log.warn("403 in {}: {}", request.getRequestURI(), e.getMessage());
+        return build(HttpStatus.FORBIDDEN,
+                "You do not have permission to perform this action",
+                request);
     }
 
     // ==================== Request Validation =======================
