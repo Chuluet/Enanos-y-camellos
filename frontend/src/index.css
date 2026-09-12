@@ -263,3 +263,119 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   background: var(--color-white);
 }
 .form-field .field-error { color: var(--rust-dark); font-size: 0.75rem; }
+
+/* ============================== Filter bar (competitors, teams) ============================== */
+.filter-bar {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.filter-bar input {
+  flex: 1;
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+}
+.filter-bar select {
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+}
+
+/* ============================== Pagination ============================== */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+/* ============================== Detail card (competitor / team detail pages) ============================== */
+.detail-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-4) var(--space-5);
+  margin: 0 0 var(--space-4);
+}
+.detail-grid dt {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--stone);
+  margin-bottom: 2px;
+}
+.detail-grid dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--track);
+}
+
+/* ============================== Team cards (team list) ============================== */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.team-card {
+  display: block;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  color: inherit;
+}
+.team-card:hover { border-color: var(--color-border-strong); text-decoration: none; }
+
+.team-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-3);
+}
+.team-card__name { font-weight: 700; font-size: 0.95rem; }
+.team-card__coach { font-size: 0.75rem; opacity: 0.55; margin-top: 2px; }
+
+.team-card__members {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+.team-card__stats {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-left: var(--space-2);
+}
+
+.avatar-chip {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--oasis);
+  color: var(--color-white);
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--sand-light);
+  margin-left: -8px;
+}
+.avatar-chip:first-child { margin-left: 0; }
+.avatar-chip--overflow { background: var(--color-border-strong); color: var(--track); }

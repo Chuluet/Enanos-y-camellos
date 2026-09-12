@@ -16,6 +16,14 @@ export function Layout() {
             <i className="ti ti-flag" aria-hidden="true" />
             Races
           </NavLink>
+          <NavLink to="/competitors" className={({ isActive }) => (isActive ? "active" : "")}>
+            <i className="ti ti-users" aria-hidden="true" />
+            Competitors
+          </NavLink>
+          <NavLink to="/teams" className={({ isActive }) => (isActive ? "active" : "")}>
+            <i className="ti ti-shield" aria-hidden="true" />
+            Teams
+          </NavLink>
           <NavLink to="/standings" className={({ isActive }) => (isActive ? "active" : "")}>
             <i className="ti ti-chart-bar" aria-hidden="true" />
             Standings
