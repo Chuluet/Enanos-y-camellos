@@ -51,15 +51,10 @@ public class Team {
     @Column(name = "max_members", nullable = false)
     private Integer maxMembers;
 
-    /**
-     * Lado inverso de la relación N a 1 (Competitor es el dueño, tiene la FK team_id).
-     * mappedBy = "team": cambios aquí no se persisten solos, hay que usar
-     * addMember/removeMember para mantener ambos lados sincronizados.
-     */
     @OneToMany(
             mappedBy = "team",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE},
+            orphanRemoval = false,
             fetch = FetchType.LAZY
     )
     @Builder.Default

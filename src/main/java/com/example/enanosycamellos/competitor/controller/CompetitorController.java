@@ -116,12 +116,15 @@ public class CompetitorController {
     }
 
     @PatchMapping("/{id}/status")
-    @Operation(summary = "Change a competitor's status")
+    @Operation(
+            summary = "Change a competitor's status",
+            description = "RETIRED is terminal: once a competitor is retired, no further status change is allowed."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Status changed"),
             @ApiResponse(responseCode = "404", description = "Competitor does not exist",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Competitor already has that status",
+            @ApiResponse(responseCode = "409", description = "Competitor already has that status, or competitor is retired and cannot change status",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<CompetitorResponse> changeStatus(
@@ -133,11 +136,12 @@ public class CompetitorController {
 
     @DeleteMapping("/{id}")
     @Operation(
-            summary = "Retire a competitor",
-            description = "Not a physical delete: status is set to RETIRED, preserving race history."
+            summary = "Retire or delete a competitor",
+            description = "If the competitor has no official race results, it is physically deleted. "
+                    + "Otherwise it is not removed: status is set to RETIRED, preserving race history."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Competitor retired"),
+            @ApiResponse(responseCode = "204", description = "Competitor deleted or retired"),
             @ApiResponse(responseCode = "404", description = "Competitor does not exist",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })

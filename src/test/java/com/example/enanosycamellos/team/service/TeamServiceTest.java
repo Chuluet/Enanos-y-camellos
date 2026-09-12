@@ -203,6 +203,27 @@ class TeamServiceTest {
 
             assertThrows(ResourceNotFoundException.class, () -> teamService.create(request));
         }
+
+        @Test
+        @DisplayName("throws 409 if an initial member is retired")
+        void retiredMember_throws409() {
+            UUID competitorId = UUID.randomUUID();
+            TeamRequest request = new TeamRequest(
+                    "The Five Exceptions", null, "Mr. Abandonado", 5, TeamStatus.ACTIVE,
+                    List.of(competitorId));
+
+            Competitor competitor = buildCompetitor(competitorId, CompetitorStatus.RETIRED, null);
+
+            when(teamRepository.existsByNameIgnoreCase("The Five Exceptions")).thenReturn(false);
+            when(teamRepository.save(any(Team.class))).thenAnswer(invocation -> {
+                Team t = invocation.getArgument(0);
+                t.setId(UUID.randomUUID());
+                return t;
+            });
+            when(competitorRepository.findById(competitorId)).thenReturn(Optional.of(competitor));
+
+            assertThrows(ConflictException.class, () -> teamService.create(request));
+        }
     }
 
     // ============================== Update (PUT, full replace) =========================
@@ -381,15 +402,31 @@ class TeamServiceTest {
         }
 
         @Test
-        @DisplayName("throws 400 if the competitor is not active")
-        void inactiveCompetitor_throws400() {
+        @DisplayName("allows a non-active competitor (e.g. injured) to join — only RETIRED blocks membership")
+        void nonRetiredCompetitor_isAllowed() {
             Team team = buildTeam("The Five Exceptions");
             Competitor competitor = buildCompetitor(UUID.randomUUID(), CompetitorStatus.INJURED, null);
 
             when(teamRepository.findWithMembersById(team.getId())).thenReturn(Optional.of(team));
             when(competitorRepository.findById(competitor.getId())).thenReturn(Optional.of(competitor));
+            when(competitorRepository.save(competitor)).thenReturn(competitor);
 
-            assertThrows(BadRequestException.class,
+            TeamResponse result = teamService.addMember(team.getId(), competitor.getId());
+
+            assertEquals(1, result.members().size());
+            assertSame(team, competitor.getTeam());
+        }
+
+        @Test
+        @DisplayName("throws 409 if the competitor is retired")
+        void retiredCompetitor_throws409() {
+            Team team = buildTeam("The Five Exceptions");
+            Competitor competitor = buildCompetitor(UUID.randomUUID(), CompetitorStatus.RETIRED, null);
+
+            when(teamRepository.findWithMembersById(team.getId())).thenReturn(Optional.of(team));
+            when(competitorRepository.findById(competitor.getId())).thenReturn(Optional.of(competitor));
+
+            assertThrows(ConflictException.class,
                     () -> teamService.addMember(team.getId(), competitor.getId()));
         }
 
@@ -462,22 +499,58 @@ class TeamServiceTest {
     class Deactivate {
 
         @Test
-        @DisplayName("sets the team's status to INACTIVE")
-        void setsInactive() {
+        @DisplayName("sets the team's status to INACTIVE when it has official race history")
+        void withHistory_setsInactive() {
             Team team = buildTeam("The Five Exceptions");
-            when(teamRepository.findById(team.getId())).thenReturn(Optional.of(team));
+            team.setVictories(3);
+            when(teamRepository.findWithMembersById(team.getId())).thenReturn(Optional.of(team));
 
             teamService.deactivate(team.getId());
 
             assertEquals(TeamStatus.INACTIVE, team.getStatus());
             verify(teamRepository).save(team);
+            verify(teamRepository, never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("physically deletes the team when it has no official race history")
+        void withoutHistory_deletesPermanently() {
+            Team team = buildTeam("The Five Exceptions");
+            when(teamRepository.findWithMembersById(team.getId())).thenReturn(Optional.of(team));
+
+            teamService.deactivate(team.getId());
+
+            verify(teamRepository).delete(team);
+            verify(teamRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("detaches members (does not delete them) before physically deleting a team with no history")
+        void withoutHistory_detachesMembersInsteadOfDeletingThem() {
+            Team team = buildTeam("The Five Exceptions");
+            Competitor member = buildCompetitor(UUID.randomUUID(), CompetitorStatus.ACTIVE, null);
+            team.addMember(member);
+
+            when(teamRepository.findWithMembersById(team.getId())).thenReturn(Optional.of(team));
+            when(competitorRepository.save(member)).thenReturn(member);
+
+            teamService.deactivate(team.getId());
+
+            // Regression check for the bug where removing a member from a
+            // team physically deleted the competitor (orphanRemoval=true):
+            // the member must just end up team-less, still alive, still
+            // assignable to another team.
+            assertNull(member.getTeam());
+            verify(competitorRepository).save(member);
+            verify(competitorRepository, never()).delete(any());
+            verify(teamRepository).delete(team);
         }
 
         @Test
         @DisplayName("throws 404 if the team does not exist")
         void notFound_throws404() {
             UUID id = UUID.randomUUID();
-            when(teamRepository.findById(id)).thenReturn(Optional.empty());
+            when(teamRepository.findWithMembersById(id)).thenReturn(Optional.empty());
 
             assertThrows(ResourceNotFoundException.class, () -> teamService.deactivate(id));
         }

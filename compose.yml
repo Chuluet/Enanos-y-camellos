@@ -49,6 +49,25 @@
 #
 # Las variables ${...} las lee Compose automáticamente del archivo .env que está
 # junto a este compose.yml. Copiá .env.template a .env y completá los valores.
+#
+# ---------------------------------------------------------------------------
+# PUERTOS: TODOS PARAMETRIZADOS DESDE .env
+# ---------------------------------------------------------------------------
+# Los cuatro puertos publicados al host (app, db, keycloak, frontend) salen de
+# .env, cada uno con un default por si no lo definís explícitamente:
+#
+#   APP_PORT       (default 8080)  -> backend Spring Boot
+#   DB_PORT        (default 5432)  -> Postgres
+#   KEYCLOAK_PORT  (default 8180)  -> consola/API de Keycloak
+#   FRONTEND_PORT  (default 8082)  -> app web
+#
+# El puerto INTERNO de cada contenedor (el número después de los ":") no
+# cambia nunca por esto — Postgres siempre escucha en 5432 adentro de la red
+# de Docker, Keycloak en 8080, etc. Lo único que varía es a qué puerto de TU
+# máquina lo publicás. Si alguna vez dos de estos vuelven a chocar (como pasó
+# con Keycloak y el frontend compartiendo 8081), es porque dos variables de
+# .env terminaron con el mismo valor — no hace falta tocar este archivo, basta
+# con cambiar una de las dos en el .env.
 # =============================================================================
 
 # Nombre fijo del proyecto. Sin esto Compose usa el nombre de la carpeta, y si
@@ -75,7 +94,9 @@ services:
     restart: unless-stopped
 
     ports:
-      - "8080:8080"
+      # "puerto_de_tu_maquina:puerto_del_contenedor". El interno (8080) no
+      # cambia; el del host sale de APP_PORT en .env.
+      - "${APP_PORT:-8080}:8080"
 
     depends_on:
       db:
@@ -101,6 +122,10 @@ services:
       # datos. Es lo que permite agregar un campo, hacer down y up, y verlo
       # reflejado en la base.
       - DDL_AUTO=update
+      # Mismo caso que DB_URL: adentro de la red de Docker, Keycloak siempre
+      # se habla por su puerto INTERNO (8080), nunca por KEYCLOAK_PORT (que es
+      # solo el puerto publicado al host, usado en las dos variables de abajo
+      # porque esas sí las ve el navegador del usuario, fuera de la red Docker).
       - KEYCLOAK_JWKS_URI=http://keycloak:8080/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
       - KEYCLOAK_ISSUER_URI=http://localhost:${KEYCLOAK_PORT:-8180}/realms/${KEYCLOAK_REALM}
       - KEYCLOAK_PUBLIC_URL=http://localhost:${KEYCLOAK_PORT:-8180}
@@ -125,6 +150,8 @@ services:
       - KC_HTTP_ENABLED=true
       - KC_HEALTH_ENABLED=true
     ports:
+      # El interno de Keycloak (8080) no cambia; el del host sale de
+      # KEYCLOAK_PORT en .env.
       - "${KEYCLOAK_PORT:-8180}:8080"
     volumes:
       # De acá lee el realm al arrancar (usuarios, roles y cliente de Swagger).
@@ -165,8 +192,10 @@ services:
     restart: unless-stopped
 
     ports:
-      # "puerto_de_tu_maquina:puerto_del_contenedor"
-      - "${DB_PORT}:5432"
+      # "puerto_de_tu_maquina:puerto_del_contenedor". El interno de Postgres
+      # (5432) no cambia; el del host sale de DB_PORT en .env, con 5432 como
+      # default si no ya tenés un Postgres local ocupando ese puerto.
+      - "${DB_PORT:-5432}:5432"
 
     environment:
       - POSTGRES_DB=${DB_NAME}
@@ -186,12 +215,15 @@ services:
       # Le da 30 segundos de gracia al primer arranque (cuando Postgres crea la
       # base) sin contar esos intentos como fallidos.
       start_period: 30s
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: http://localhost:8080
+        # Puerto del backend visto desde el navegador del usuario (fuera de la
+        # red de Docker), por eso usa APP_PORT y no el 8080 interno a secas.
+        VITE_API_BASE_URL: http://localhost:${APP_PORT:-8080}
         VITE_KEYCLOAK_AUTHORITY: http://localhost:${KEYCLOAK_PORT:-8180}/realms/${KEYCLOAK_REALM}
         VITE_KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
 
@@ -201,7 +233,10 @@ services:
     restart: unless-stopped
 
     ports:
-      - "8081:80"
+      # El interno de nginx dentro del contenedor (80) no cambia; el del host
+      # sale de FRONTEND_PORT en .env. Default 8082 para no chocar con
+      # KEYCLOAK_PORT (8180 por defecto, pero cambialo en .env si hace falta).
+      - "${FRONTEND_PORT:-8082}:80"
 
     depends_on:
       app:

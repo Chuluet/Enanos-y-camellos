@@ -133,14 +133,16 @@ public class TeamController {
     }
 
     @PostMapping("/{teamId}/members/{competitorId}")
-    @Operation(summary = "Add a competitor to a team")
+    @Operation(
+            summary = "Add a competitor to a team",
+            description = "A competitor may join a team regardless of ACTIVE/INJURED/SUSPENDED status; "
+                    + "the only status that blocks membership is RETIRED."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Competitor added"),
-            @ApiResponse(responseCode = "400", description = "Competitor is not active",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Team or competitor does not exist",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Team is full, inactive, or competitor already has a team",
+            @ApiResponse(responseCode = "409", description = "Team is full, inactive, competitor is retired, or competitor already has a team",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<TeamResponse> addMember(
@@ -166,11 +168,12 @@ public class TeamController {
 
     @DeleteMapping("/{id}")
     @Operation(
-            summary = "Deactivate a team",
-            description = "The team is not deleted: status is set to INACTIVE."
+            summary = "Deactivate or delete a team",
+            description = "If the team has no official race history, it is physically deleted. "
+                    + "Otherwise it is not removed: status is set to INACTIVE."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Team deactivated"),
+            @ApiResponse(responseCode = "204", description = "Team deleted or deactivated"),
             @ApiResponse(responseCode = "404", description = "Team does not exist",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
