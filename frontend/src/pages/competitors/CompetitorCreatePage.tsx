@@ -4,6 +4,7 @@ import { competitorsApi } from "../../api/competitors";
 import type { CompetitorType } from "../../api/types";
 import { ApiError } from "../../api/apiClient";
 import { COMPETITOR_AVATAR } from "../../assets/competitorAvatars";
+import camelBg from "../../assets/camel-bg.jpg";
 
 type FormState = {
     name: string;
@@ -27,9 +28,6 @@ const EMPTY_FORM: FormState = {
     origin: "",
 };
 
-/** Strips everything except digits and (optionally) a single decimal point,
- * so typing/pasting can never produce a negative number or stray characters.
- * allowDecimal=false is used for approximateAge, which should stay a whole number. */
 function sanitizeNumeric(value: string, allowDecimal: boolean): string {
     let cleaned = allowDecimal ? value.replace(/[^0-9.]/g, "") : value.replace(/[^0-9]/g, "");
     if (allowDecimal) {
@@ -114,125 +112,127 @@ export function CompetitorCreatePage() {
     }
 
     return (
-        <div>
-            <Link to="/competitors" className="back-link">
-                ← Back to competitors
-            </Link>
+        <>
+            <div className="page-bg-fixed" style={{ backgroundImage: `url(${camelBg})` }} />
+            <div>
+                <Link to="/competitors" className="page-breadcrumb">
+                    ← Back to competitors
+                </Link>
 
-            <div className="form-header">
-                <img src={COMPETITOR_AVATAR[form.competitorType]} alt="" className="form-header__avatar" />
-                <div>
-                    <h1>New competitor</h1>
+                <h1 className="page-title-banner">New competitor</h1>
+
+                <div className="form-header">
+                    <img src={COMPETITOR_AVATAR[form.competitorType]} alt="" className="form-header__avatar" />
                     <p className="app-content__subtitle" style={{ marginBottom: 0 }}>
                         Register a racer to add them to the roster.
                     </p>
                 </div>
+
+                {formError && (
+                    <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
+                        <p>{formError}</p>
+                    </div>
+                )}
+                {fieldErrors.object && (
+                    <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
+                        <p>{fieldErrors.object}</p>
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="detail-card form-card">
+                    <div className="form-section">
+                        <h3>Identity</h3>
+                        <div className="form-grid">
+                            <div className="form-field">
+                                <label>Name</label>
+                                <input value={form.name} onChange={(e) => updateField("name", e.target.value)} />
+                                {fieldErrors.name && <span className="field-error">{fieldErrors.name}</span>}
+                            </div>
+                            <div className="form-field">
+                                <label>Nickname</label>
+                                <input value={form.nickname} onChange={(e) => updateField("nickname", e.target.value)} />
+                                {fieldErrors.nickname && <span className="field-error">{fieldErrors.nickname}</span>}
+                            </div>
+                            <div className="form-field">
+                                <label>Type</label>
+                                <select
+                                    value={form.competitorType}
+                                    onChange={(e) => updateField("competitorType", e.target.value as CompetitorType)}
+                                >
+                                    <option value="CAMEL">Camel</option>
+                                    <option value="DWARF">Dwarf</option>
+                                    <option value="MEDIUM">Medium</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                                {fieldErrors.competitorType && (
+                                    <span className="field-error">{fieldErrors.competitorType}</span>
+                                )}
+                            </div>
+                            <div className="form-field">
+                                <label>Origin</label>
+                                <input value={form.origin} onChange={(e) => updateField("origin", e.target.value)} />
+                                {fieldErrors.origin && <span className="field-error">{fieldErrors.origin}</span>}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-section">
+                        <h3>Vital stats</h3>
+                        <div className="form-grid">
+                            <div className="form-field">
+                                <label>Date of birth</label>
+                                <input
+                                    type="date"
+                                    value={form.dateOfBirth}
+                                    onChange={(e) => updateField("dateOfBirth", e.target.value)}
+                                />
+                                {fieldErrors.dateOfBirth && <span className="field-error">{fieldErrors.dateOfBirth}</span>}
+                            </div>
+                            <div className="form-field">
+                                <label>Approximate age (if no date of birth)</label>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={form.approximateAge}
+                                    onChange={(e) => updateNumericField("approximateAge", e.target.value, false)}
+                                />
+                                {fieldErrors.approximateAge && (
+                                    <span className="field-error">{fieldErrors.approximateAge}</span>
+                                )}
+                            </div>
+                            <div className="form-field">
+                                <label>Height (cm)</label>
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={form.height}
+                                    onChange={(e) => updateNumericField("height", e.target.value, true)}
+                                />
+                                {fieldErrors.height && <span className="field-error">{fieldErrors.height}</span>}
+                            </div>
+                            <div className="form-field">
+                                <label>Weight (kg)</label>
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={form.weight}
+                                    onChange={(e) => updateNumericField("weight", e.target.value, true)}
+                                />
+                                {fieldErrors.weight && <span className="field-error">{fieldErrors.weight}</span>}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-actions">
+                        <button type="submit" className="btn btn-primary" disabled={saving}>
+                            {saving ? "Creating..." : "Create competitor"}
+                        </button>
+                        <Link to="/competitors" className="btn btn-secondary">
+                            Cancel
+                        </Link>
+                    </div>
+                </form>
             </div>
-
-            {formError && (
-                <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
-                    <p>{formError}</p>
-                </div>
-            )}
-            {fieldErrors.object && (
-                <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
-                    <p>{fieldErrors.object}</p>
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="detail-card form-card">
-                <div className="form-section">
-                    <h3>Identity</h3>
-                    <div className="form-grid">
-                        <div className="form-field">
-                            <label>Name</label>
-                            <input value={form.name} onChange={(e) => updateField("name", e.target.value)} />
-                            {fieldErrors.name && <span className="field-error">{fieldErrors.name}</span>}
-                        </div>
-                        <div className="form-field">
-                            <label>Nickname</label>
-                            <input value={form.nickname} onChange={(e) => updateField("nickname", e.target.value)} />
-                            {fieldErrors.nickname && <span className="field-error">{fieldErrors.nickname}</span>}
-                        </div>
-                        <div className="form-field">
-                            <label>Type</label>
-                            <select
-                                value={form.competitorType}
-                                onChange={(e) => updateField("competitorType", e.target.value as CompetitorType)}
-                            >
-                                <option value="CAMEL">Camel</option>
-                                <option value="DWARF">Dwarf</option>
-                                <option value="MEDIUM">Medium</option>
-                                <option value="OTHER">Other</option>
-                            </select>
-                            {fieldErrors.competitorType && (
-                                <span className="field-error">{fieldErrors.competitorType}</span>
-                            )}
-                        </div>
-                        <div className="form-field">
-                            <label>Origin</label>
-                            <input value={form.origin} onChange={(e) => updateField("origin", e.target.value)} />
-                            {fieldErrors.origin && <span className="field-error">{fieldErrors.origin}</span>}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="form-section">
-                    <h3>Vital stats</h3>
-                    <div className="form-grid">
-                        <div className="form-field">
-                            <label>Date of birth</label>
-                            <input
-                                type="date"
-                                value={form.dateOfBirth}
-                                onChange={(e) => updateField("dateOfBirth", e.target.value)}
-                            />
-                            {fieldErrors.dateOfBirth && <span className="field-error">{fieldErrors.dateOfBirth}</span>}
-                        </div>
-                        <div className="form-field">
-                            <label>Approximate age (if no date of birth)</label>
-                            <input
-                                type="text"
-                                inputMode="numeric"
-                                value={form.approximateAge}
-                                onChange={(e) => updateNumericField("approximateAge", e.target.value, false)}
-                            />
-                            {fieldErrors.approximateAge && (
-                                <span className="field-error">{fieldErrors.approximateAge}</span>
-                            )}
-                        </div>
-                        <div className="form-field">
-                            <label>Height (cm)</label>
-                            <input
-                                type="text"
-                                inputMode="decimal"
-                                value={form.height}
-                                onChange={(e) => updateNumericField("height", e.target.value, true)}
-                            />
-                            {fieldErrors.height && <span className="field-error">{fieldErrors.height}</span>}
-                        </div>
-                        <div className="form-field">
-                            <label>Weight (kg)</label>
-                            <input
-                                type="text"
-                                inputMode="decimal"
-                                value={form.weight}
-                                onChange={(e) => updateNumericField("weight", e.target.value, true)}
-                            />
-                            {fieldErrors.weight && <span className="field-error">{fieldErrors.weight}</span>}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="form-actions">
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                        {saving ? "Creating..." : "Create competitor"}
-                    </button>
-                    <Link to="/competitors" className="btn btn-secondary">
-                        Cancel
-                    </Link>
-                </div>
-            </form>
-        </div>
+        </>
     );
 }
