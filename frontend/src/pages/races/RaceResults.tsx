@@ -17,7 +17,7 @@ export function RaceResults({ race }: { race: Race }) {
   const auth = useAuth();
   const { canWrite } = useRoles();
 
-const [results, setResults] = useState<RaceResultResponse[] | null>(null);
+  const [results, setResults] = useState<RaceResultResponse[] | null>(null);
   const [approvedRegistrations, setApprovedRegistrations] = useState<Registration[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,52 +98,57 @@ const [results, setResults] = useState<RaceResultResponse[] | null>(null);
       )}
 
       {canRecord && (
-        <div className="detail-card" style={{ marginBottom: 16 }}>
-          <div className="detail-grid">
-            <div className="form-field">
-              <label>Participant</label>
-              <select value={registrationId} onChange={(e) => setRegistrationId(e.target.value)}>
-                <option value="">Select...</option>
-                {approvedRegistrations.map((reg) => (
-                  <option key={reg.id} value={reg.id}>
-                    {reg.competitor ? reg.competitor.name : reg.team?.name}
-                  </option>
-                ))}
-              </select>
+        <div className="detail-card form-card" style={{ marginBottom: 16 }}>
+          <div className="form-section">
+            <h3>Record a result</h3>
+            <div className="form-grid">
+              <div className="form-field">
+                <label>Participant</label>
+                <select value={registrationId} onChange={(e) => setRegistrationId(e.target.value)}>
+                  <option value="">Select...</option>
+                  {approvedRegistrations.map((reg) => (
+                    <option key={reg.id} value={reg.id}>
+                      {reg.competitor ? reg.competitor.name : reg.team?.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-field">
+                <label>Status</label>
+                <select value={status} onChange={(e) => setStatus(e.target.value as ResultStatus)}>
+                  <option value="FINISHED">Finished</option>
+                  <option value="DISQUALIFIED">Disqualified</option>
+                  <option value="DID_NOT_FINISH">Did not finish</option>
+                  <option value="DID_NOT_START">Did not start</option>
+                </select>
+              </div>
+              {status === "FINISHED" && (
+                <>
+                  <div className="form-field">
+                    <label>Final position</label>
+                    <input
+                      type="number"
+                      value={finalPosition}
+                      onChange={(e) => setFinalPosition(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label>Completion time (seconds)</label>
+                    <input
+                      type="number"
+                      value={completionTime}
+                      onChange={(e) => setCompletionTime(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
             </div>
-            <div className="form-field">
-              <label>Status</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as ResultStatus)}>
-                <option value="FINISHED">Finished</option>
-                <option value="DISQUALIFIED">Disqualified</option>
-                <option value="DID_NOT_FINISH">Did not finish</option>
-                <option value="DID_NOT_START">Did not start</option>
-              </select>
-            </div>
-            {status === "FINISHED" && (
-              <>
-                <div className="form-field">
-                  <label>Final position</label>
-                  <input
-                    type="number"
-                    value={finalPosition}
-                    onChange={(e) => setFinalPosition(e.target.value)}
-                  />
-                </div>
-                <div className="form-field">
-                  <label>Completion time (seconds)</label>
-                  <input
-                    type="number"
-                    value={completionTime}
-                    onChange={(e) => setCompletionTime(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
           </div>
-          <button className="btn btn-primary" onClick={handleRecord} disabled={saving || !registrationId}>
-            Record result
-          </button>
+          <div className="form-actions">
+            <button className="btn btn-primary" onClick={handleRecord} disabled={saving || !registrationId}>
+              {saving ? "Recording..." : "Record result"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -153,7 +158,7 @@ const [results, setResults] = useState<RaceResultResponse[] | null>(null);
         </div>
       ) : (
         <div className="sheet">
-                    {results
+          {results
             .slice()
             .sort((a, b) => (a.finalPosition ?? 999) - (b.finalPosition ?? 999))
             .map((result, index) => (

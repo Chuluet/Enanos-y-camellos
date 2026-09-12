@@ -751,6 +751,10 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
   clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%); /* mirrored skew vs competitors' banner */
   box-shadow: 0 10px 28px -10px oklch(0.62 0.15 200 / 60%);
 }
+.page-title-banner--races {
+  background: var(--gold);
+  box-shadow: 0 10px 28px -10px oklch(0.78 0.17 220 / 60%);
+}
 
 .team-card {
   border-left: 3px solid var(--oasis);

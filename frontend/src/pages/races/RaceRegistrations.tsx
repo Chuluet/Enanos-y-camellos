@@ -127,23 +127,33 @@ export function RaceRegistrations({ race }: { race: Race }) {
       )}
 
       {canRegisterMore && (
-        <div className="filter-bar" style={{ marginBottom: 16 }}>
-          <select value={participantId} onChange={(e) => setParticipantId(e.target.value)}>
-            <option value="">Select a competitor or team...</option>
-            {competitors.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.nickname})
-              </option>
-            ))}
-            {teams.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} (team)
-              </option>
-            ))}
-          </select>
-          <button className="btn btn-primary" onClick={handleRegister} disabled={registering || !participantId}>
-            Register
-          </button>
+        <div className="detail-card form-card" style={{ marginBottom: 16 }}>
+          <div className="form-section">
+            <h3>Register a participant</h3>
+            <div className="form-grid">
+              <div className="form-field">
+                <label>Competitor or team</label>
+                <select value={participantId} onChange={(e) => setParticipantId(e.target.value)}>
+                  <option value="">Select...</option>
+                  {competitors.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.nickname})
+                    </option>
+                  ))}
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} (team)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div className="form-actions">
+            <button className="btn btn-primary" onClick={handleRegister} disabled={registering || !participantId}>
+              {registering ? "Registering..." : "Register"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -152,7 +162,7 @@ export function RaceRegistrations({ race }: { race: Race }) {
           <p>No registrations yet.</p>
         </div>
       ) : (
-                <div className="sheet">
+        <div className="sheet">
           {registrations.map((reg, index) => (
             <div
               key={reg.id}
