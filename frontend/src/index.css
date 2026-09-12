@@ -1,20 +1,23 @@
+/* ============================== Fonts ============================== */
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Oswald:wght@300;400;500;600;700&display=swap");
+
 /* ============================== Design tokens ============================== */
 :root {
-  --track: #241D14;
-  --sand: #E4D3AA;
-  --sand-light: #F0E4C8;
-  --rust: #C1441E;
-  --rust-dark: #9E3417;
-  --gold: #B8842A;
-  --oasis: #3B6E5E;
-  --stone: #8A8168;
+  --track: oklch(0.14 0.05 262);          /* deep ink navy (was dark text) */
+  --sand: oklch(0.42 0.21 262);           /* main background (was light sand) */
+  --sand-light: oklch(0.98 0.01 240);     /* near-white foreground text */
+  --rust: oklch(0.55 0.24 22);            /* crimson accent (was rust) */
+  --rust-dark: oklch(0.45 0.22 22);
+  --gold: oklch(0.78 0.17 220);           /* electric blue (was gold) */
+  --oasis: oklch(0.62 0.15 200);          /* teal-cyan accent (was oasis) */
+  --stone: oklch(0.82 0.07 235);          /* muted foreground (was stone) */
 
-  --color-white: #ffffff;
-  --color-border: rgba(36, 29, 20, 0.12);
-  --color-border-strong: rgba(36, 29, 20, 0.2);
+  --color-white: oklch(0.32 0.18 262);    /* card surface (was white) */
+  --color-border: oklch(0.55 0.14 240 / 35%);
+  --color-border-strong: oklch(0.55 0.14 240 / 55%);
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -23,10 +26,10 @@
   --space-5: 24px;
   --space-6: 32px;
 
-  --font-display: "Archivo Black", sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: "Archivo Black", system-ui, sans-serif;
+  --font-body: "Oswald", system-ui, sans-serif;
 
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -34,23 +37,73 @@
 body {
   margin: 0;
   font-family: var(--font-body);
-  background: var(--sand);
-  color: var(--track);
+  letter-spacing: 0.02em;
+  background:
+          radial-gradient(120% 90% at 80% 0%, oklch(0.55 0.2 235) 0%, transparent 60%),
+          linear-gradient(160deg, oklch(0.38 0.2 262) 0%, oklch(0.18 0.11 265) 100%);
+  background-attachment: fixed;
+  color: var(--sand-light);
   line-height: 1.5;
 }
 
 h1, h2, h3 {
   font-family: var(--font-display);
   margin: 0 0 var(--space-2);
-  color: var(--track);
-  letter-spacing: -0.01em;
+  color: var(--sand-light);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
 }
-h1 { font-size: 1.4rem; }
+h1 { font-size: 1.5rem; }
 h2 { font-size: 1.1rem; }
 h3 { font-size: 0.95rem; }
 
-a { color: var(--rust-dark); text-decoration: none; }
+a { color: var(--gold); text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+/* ============================== Shared motion / surface utilities ============================== */
+@keyframes cascade-in {
+  from { opacity: 0; transform: translate3d(-24px, 0, 0) skewX(-8deg); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) skewX(-8deg); }
+}
+.cascade {
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: cascade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise {
+  opacity: 0;
+  animation: rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cascade, .rise { opacity: 1; animation: none; }
+}
+
+.panel {
+  background: linear-gradient(100deg, oklch(0.2 0.1 264 / 92%), oklch(0.3 0.16 258 / 82%));
+  border: 1px solid var(--color-border);
+  box-shadow: 0 18px 40px -18px oklch(0.1 0.08 264 / 90%);
+}
+
+/* ============================== Fixed full-viewport page background ============================== */
+.page-bg-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+}
+.page-bg-fixed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, oklch(0.14 0.05 262 / 90%), oklch(0.14 0.05 262 / 97%));
+}
 
 /* ============================== App shell (sidebar layout) ============================== */
 .app-shell {
@@ -69,13 +122,15 @@ a:hover { text-decoration: underline; }
   position: sticky;
   top: 0;
   height: 100vh;
+  border-right: 1px solid var(--color-border);
 }
 
 .app-brand {
   font-family: var(--font-display);
   font-size: 1rem;
   line-height: 1.25;
-  color: var(--sand);
+  text-transform: uppercase;
+  color: var(--gold);
   margin-bottom: var(--space-6);
   padding: 0 var(--space-2);
 }
@@ -97,15 +152,17 @@ a:hover { text-decoration: underline; }
   font-size: 0.85rem;
   font-weight: 500;
   text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-.app-nav a:hover { background: rgba(228, 211, 170, 0.08); text-decoration: none; }
+.app-nav a:hover { background: oklch(0.98 0.01 240 / 8%); text-decoration: none; color: var(--sand-light); }
 .app-nav a.active {
-  background: rgba(228, 211, 170, 0.14);
+  background: oklch(0.78 0.17 220 / 16%);
   color: var(--sand-light);
+  border-left: 2px solid var(--gold);
 }
 
 .app-user {
-  border-top: 1px solid rgba(228, 211, 170, 0.15);
+  border-top: 1px solid var(--color-border);
   padding-top: var(--space-3);
   font-size: 0.75rem;
 }
@@ -114,10 +171,10 @@ a:hover { text-decoration: underline; }
 .app-user button {
   width: 100%;
   background: transparent;
-  border: 1px solid rgba(228, 211, 170, 0.25);
+  border: 1px solid var(--color-border-strong);
   color: var(--sand-light);
 }
-.app-user button:hover { background: rgba(228, 211, 170, 0.08); }
+.app-user button:hover { background: oklch(0.98 0.01 240 / 8%); }
 
 .app-content {
   flex: 1;
@@ -134,8 +191,7 @@ a:hover { text-decoration: underline; }
 
 .app-content__subtitle {
   font-size: 0.8rem;
-  color: var(--track);
-  opacity: 0.55;
+  color: var(--stone);
   margin-bottom: var(--space-5);
 }
 
@@ -147,16 +203,73 @@ button, .btn {
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
 }
-button:hover, .btn:hover { filter: brightness(0.95); }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:hover, .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-.btn-primary { background: var(--rust); color: var(--color-white); }
-.btn-secondary { background: var(--color-white); color: var(--track); border: 1px solid var(--color-border-strong); }
-.btn-danger { background: var(--rust-dark); color: var(--color-white); }
+.btn-primary { background: var(--gold); color: var(--track); }
+.btn-secondary { background: transparent; color: var(--sand-light); border: 1px solid var(--color-border-strong); }
+.btn-danger { background: var(--rust); color: var(--color-white); }
+.btn--confirmed {
+  background: var(--oasis);
+  color: var(--track);
+  animation: confirm-pulse 0.4s ease;
+}
+@keyframes confirm-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
 
-/* ============================== Heat-sheet list (used for races, registrations, results) ============================== */
+/* ============================== Breadcrumb ============================== */
+.page-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  margin-bottom: var(--space-3);
+}
+.page-breadcrumb:hover { text-decoration: none; filter: brightness(1.2); }
+
+/* ============================== Title banner (shear) ============================== */
+.page-title-banner {
+  display: inline-block;
+  background: var(--rust);
+  color: var(--sand-light);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  padding: var(--space-3) var(--space-6) var(--space-3) var(--space-4);
+  text-transform: uppercase;
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
+  margin: 0 0 var(--space-5);
+  box-shadow: 0 10px 28px -10px oklch(0.55 0.24 22 / 65%);
+}
+
+/* ============================== Session bar ============================== */
+.page-session-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--stone);
+}
+
+/* ============================== Heat-sheet list (races, registrations, results) ============================== */
 .sheet {
   display: flex;
   flex-direction: column;
@@ -166,16 +279,20 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  padding: var(--space-3) var(--space-1);
-  border-top: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  margin-bottom: 2px;
+  background: linear-gradient(100deg, oklch(0.2 0.1 264 / 70%), oklch(0.3 0.16 258 / 55%));
+  border: 1px solid var(--color-border);
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
-.sheet-row:last-child { border-bottom: 1px solid var(--color-border); }
+.sheet-row:hover { border-color: var(--gold); transform: translateX(2px); }
 
 .sheet-row__index {
   font-family: var(--font-display);
   font-size: 1.3rem;
-  color: var(--track);
-  opacity: 0.2;
+  color: var(--sand-light);
+  opacity: 0.18;
   width: 28px;
   flex-shrink: 0;
   text-align: right;
@@ -190,15 +307,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .sheet-row__body { flex: 1; min-width: 0; }
 
-.sheet-row__title { font-weight: 700; font-size: 0.95rem; color: var(--track); }
+.sheet-row__title { font-weight: 700; font-size: 0.95rem; color: var(--sand-light); }
 
 .sheet-row__meta {
   display: flex;
   gap: var(--space-4);
   margin-top: 2px;
   font-size: 0.75rem;
-  color: var(--track);
-  opacity: 0.55;
+  color: var(--stone);
   flex-wrap: wrap;
 }
 
@@ -220,25 +336,58 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .stripe-stone { background: var(--stone); }
 .stripe-rust { background: var(--rust); }
 
+/* ============================== Larger competitor rows ============================== */
+.sheet-row--competitor {
+  padding: var(--space-4) var(--space-5);
+  gap: var(--space-5);
+}
+.sheet-row--competitor .sheet-row__index {
+  font-size: 2.2rem;
+  color: var(--rust);
+  opacity: 1;
+  width: 48px;
+}
+.sheet-row--competitor .sheet-row__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--gold);
+}
+.sheet-row--competitor .sheet-row__title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.sheet-row--competitor .sheet-row__meta {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  gap: var(--space-3);
+}
+.sheet-row--competitor .sheet-row__status {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
 /* ============================== States: loading / empty / error ============================== */
 .state-box {
   text-align: center;
   padding: var(--space-6);
-  color: var(--track);
-  opacity: 0.6;
+  color: var(--stone);
 }
 .state-box--error {
-  background: rgba(193, 68, 30, 0.08);
-  color: var(--rust-dark);
+  background: oklch(0.55 0.24 22 / 12%);
+  color: oklch(0.85 0.12 22);
   border-radius: var(--radius-md);
-  opacity: 1;
+  border: 1px solid oklch(0.55 0.24 22 / 30%);
 }
 
 .spinner {
   width: 26px;
   height: 26px;
   border: 3px solid var(--color-border);
-  border-top-color: var(--rust);
+  border-top-color: var(--gold);
   border-radius: 50%;
   margin: 0 auto var(--space-3);
   animation: spin 0.8s linear infinite;
@@ -252,22 +401,22 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   gap: var(--space-1);
   margin-bottom: var(--space-4);
 }
-.form-field label { font-weight: 600; font-size: 0.85rem; }
+.form-field label { font-weight: 600; font-size: 0.85rem; color: var(--sand-light); }
 .form-field input,
-.form-field select,
 .form-field textarea {
   font: inherit;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   background: var(--color-white);
+  color: var(--sand-light);
 }
-.form-field .field-error { color: var(--rust-dark); font-size: 0.75rem; }
+.form-field .field-error { color: var(--rust); font-size: 0.75rem; }
 
 /* ============================== Filter bar (competitors, teams) ============================== */
 .filter-bar {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-5);
   margin-bottom: var(--space-4);
 }
 .filter-bar input {
@@ -277,13 +426,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   background: var(--color-white);
-}
-.filter-bar select {
-  font: inherit;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--color-white);
+  color: var(--sand-light);
 }
 
 /* ============================== Pagination ============================== */
@@ -294,15 +437,16 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   gap: var(--space-4);
   margin-top: var(--space-5);
   font-size: 0.8rem;
-  opacity: 0.75;
+  color: var(--stone);
 }
 
-/* ============================== Detail card (competitor / team detail pages) ============================== */
+/* ============================== Detail card ============================== */
 .detail-card {
-  background: var(--color-white);
+  background: linear-gradient(100deg, oklch(0.2 0.1 264 / 92%), oklch(0.3 0.16 258 / 82%));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-4) var(--space-5);
+  box-shadow: 0 18px 40px -18px oklch(0.1 0.08 264 / 90%);
 }
 
 .detail-grid {
@@ -322,7 +466,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .detail-grid dd {
   margin: 0;
   font-size: 0.9rem;
-  color: var(--track);
+  color: var(--sand-light);
 }
 
 /* ============================== Team cards (team list) ============================== */
@@ -334,13 +478,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .team-card {
   display: block;
-  background: var(--color-white);
+  background: linear-gradient(100deg, oklch(0.2 0.1 264 / 85%), oklch(0.3 0.16 258 / 70%));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-4);
   color: inherit;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
-.team-card:hover { border-color: var(--color-border-strong); text-decoration: none; }
+.team-card:hover { border-color: var(--gold); text-decoration: none; transform: translateY(-2px); }
 
 .team-card__header {
   display: flex;
@@ -348,8 +493,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   align-items: flex-start;
   margin-bottom: var(--space-3);
 }
-.team-card__name { font-weight: 700; font-size: 0.95rem; }
-.team-card__coach { font-size: 0.75rem; opacity: 0.55; margin-top: 2px; }
+.team-card__name { font-weight: 700; font-size: 0.95rem; color: var(--sand-light); }
+.team-card__coach { font-size: 0.75rem; color: var(--stone); margin-top: 2px; }
 
 .team-card__members {
   display: flex;
@@ -359,7 +504,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 .team-card__stats {
   font-size: 0.75rem;
-  opacity: 0.6;
+  color: var(--stone);
   margin-left: var(--space-2);
 }
 
@@ -368,14 +513,143 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   height: 26px;
   border-radius: 50%;
   background: var(--oasis);
-  color: var(--color-white);
+  color: var(--track);
   font-size: 0.65rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--sand-light);
+  border: 2px solid var(--track);
   margin-left: -8px;
 }
 .avatar-chip:first-child { margin-left: 0; }
-.avatar-chip--overflow { background: var(--color-border-strong); color: var(--track); }
+.avatar-chip--overflow { background: var(--color-border-strong); color: var(--sand-light); }
+
+/* ============================== Competitor hero (detail page) ============================== */
+.competitor-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  animation: hero-settle 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hero-settle {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.competitor-hero__avatar {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--gold);
+  background: var(--track);
+  flex-shrink: 0;
+  box-shadow: 0 0 24px -6px oklch(0.78 0.17 220 / 60%);
+}
+
+.competitor-hero__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.competitor-hero__status-line {
+  margin: 0 0 var(--space-3);
+  font-size: 0.85rem;
+  color: var(--stone);
+}
+
+.competitor-hero__status-panel {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-left: 1px solid var(--color-border);
+  margin-left: var(--space-1);
+}
+
+.competitor-hero__status-panel-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--stone);
+}
+
+.competitor-hero__status-panel select {
+  min-width: 140px;
+}
+
+@media (max-width: 640px) {
+  .competitor-hero { flex-direction: column; }
+  .competitor-hero__status-panel {
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* ============================== Avatars in sheet rows ============================== */
+.sheet-row__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  background: var(--track);
+}
+
+/* ============================== Page hero banner (list pages) ============================== */
+.page-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+  animation: hero-settle 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-hero__image {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 16px oklch(0.78 0.17 220 / 45%));
+}
+
+.page-hero__text { flex: 1 1 auto; }
+.page-hero__text h1 { margin: 0 0 4px; }
+.page-hero__text .app-content__subtitle { margin: 0; }
+
+.page-hero__cta { flex-shrink: 0; }
+
+/* ============================== Rounded selects, app-wide ============================== */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--color-white);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23E4EAF0' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 10px 6px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  padding: var(--space-2) 34px var(--space-2) var(--space-4);
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--sand-light);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+select:hover { border-color: var(--gold); }
+select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px oklch(0.78 0.17 220 / 20%);
+}
+select:disabled { opacity: 0.5; cursor: not-allowed; }

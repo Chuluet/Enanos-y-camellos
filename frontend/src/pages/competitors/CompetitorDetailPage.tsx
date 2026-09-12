@@ -4,6 +4,7 @@ import { competitorsApi } from "../../api/competitors";
 import type { CompetitorResponse, CompetitorStatus, CompetitorType } from "../../api/types";
 import { ApiError } from "../../api/apiClient";
 import { useRoles } from "../../auth/useRoles";
+import {COMPETITOR_AVATAR} from "../../assets/competitorAvatars.ts";
 
 const STATUS_TONE: Record<CompetitorStatus, string> = {
   ACTIVE: "oasis",
@@ -48,42 +49,43 @@ export function CompetitorDetailPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [statusDraft, setStatusDraft] = useState<CompetitorStatus | "">("");
+  const [justApplied, setJustApplied] = useState(false);
 
   function load() {
     if (!id) return;
     setCompetitor(null);
     setError(null);
     competitorsApi
-      .getById(id)
-      .then((data) => {
-        setCompetitor(data);
-        setForm(toFormState(data));
-        setStatusDraft(data.status);
-      })
-      .catch((err) => {
-        setError(err instanceof ApiError ? err.message : "Something went wrong loading this competitor.");
-      });
+        .getById(id)
+        .then((data) => {
+          setCompetitor(data);
+          setForm(toFormState(data));
+          setStatusDraft(data.status);
+        })
+        .catch((err) => {
+          setError(err instanceof ApiError ? err.message : "Something went wrong loading this competitor.");
+        });
   }
 
   useEffect(load, [id]);
 
   if (error) {
     return (
-      <div className="state-box state-box--error">
-        <p>{error}</p>
-        <Link to="/competitors" className="btn btn-secondary">
-          Back to competitors
-        </Link>
-      </div>
+        <div className="state-box state-box--error">
+          <p>{error}</p>
+          <Link to="/competitors" className="btn btn-secondary">
+            Back to competitors
+          </Link>
+        </div>
     );
   }
 
   if (!competitor || !form) {
     return (
-      <div className="state-box">
-        <div className="spinner" />
-        <p>Loading competitor...</p>
-      </div>
+        <div className="state-box">
+          <div className="spinner" />
+          <p>Loading competitor...</p>
+        </div>
     );
   }
 
@@ -112,7 +114,7 @@ export function CompetitorDetailPage() {
       setEditing(false);
     } catch (err) {
       setFormError(
-        err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't save changes."
+          err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't save changes."
       );
     } finally {
       setSaving(false);
@@ -120,12 +122,14 @@ export function CompetitorDetailPage() {
   }
 
   async function handleStatusChange() {
-    if (!id || !statusDraft || statusDraft === competitor?.status) return;
+    if (!id || !statusDraft || !competitor || statusDraft === competitor.status) return;
     setSaving(true);
     setFormError(null);
     try {
       const updated = await competitorsApi.changeStatus(id, statusDraft);
       setCompetitor(updated);
+      setJustApplied(true);
+      setTimeout(() => setJustApplied(false), 900);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Couldn't change status.");
     } finally {
@@ -134,8 +138,8 @@ export function CompetitorDetailPage() {
   }
 
   async function handleRetire() {
-    if (!id) return;
-    if (!window.confirm(`Retire ${competitor?.name}? This preserves race history but removes them from active competition.`)) {
+    if (!id || !competitor) return;
+    if (!window.confirm(`Retire ${competitor.name}? This preserves race history but removes them from active competition.`)) {
       return;
     }
     setSaving(true);
@@ -148,175 +152,180 @@ export function CompetitorDetailPage() {
     }
   }
 
+  const avatarSrc = COMPETITOR_AVATAR[competitor.competitorType];
+
   return (
-    <div>
-      <div className="app-content__header">
-        <h1>
-          {competitor.name} <span style={{ opacity: 0.55, fontWeight: 400 }}>“{competitor.nickname}”</span>
-        </h1>
-        {isAdministrator && !editing && (
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn btn-secondary" onClick={() => setEditing(true)}>
-              Edit
-            </button>
-            <button className="btn btn-danger" onClick={handleRetire} disabled={saving}>
-              Retire
-            </button>
-          </div>
+      <div>
+        <div className="app-content__header">
+          <h1>
+            {competitor.name} <span style={{ opacity: 0.55, fontWeight: 400 }}>“{competitor.nickname}”</span>
+          </h1>
+          {isAdministrator && !editing && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn btn-secondary" onClick={() => setEditing(true)}>
+                  Edit
+                </button>
+                <button className="btn btn-danger" onClick={handleRetire} disabled={saving}>
+                  Retire
+                </button>
+              </div>
+          )}
+        </div>
+
+        {formError && (
+            <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
+              <p>{formError}</p>
+            </div>
+        )}
+
+        {editing ? (
+            <div className="detail-card">
+              <div className="detail-grid">
+                <div className="form-field">
+                  <label>Name</label>
+                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                </div>
+                <div className="form-field">
+                  <label>Nickname</label>
+                  <input value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
+                </div>
+                <div className="form-field">
+                  <label>Type</label>
+                  <select
+                      value={form.competitorType}
+                      onChange={(e) => setForm({ ...form, competitorType: e.target.value as CompetitorType })}
+                  >
+                    <option value="CAMEL">Camel</option>
+                    <option value="DWARF">Dwarf</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+                <div className="form-field">
+                  <label>Origin</label>
+                  <input value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} />
+                </div>
+                <div className="form-field">
+                  <label>Date of birth</label>
+                  <input
+                      type="date"
+                      value={form.dateOfBirth}
+                      onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
+                  />
+                </div>
+                <div className="form-field">
+                  <label>Approximate age (if no date of birth)</label>
+                  <input
+                      type="number"
+                      value={form.approximateAge}
+                      onChange={(e) => setForm({ ...form, approximateAge: e.target.value })}
+                  />
+                </div>
+                <div className="form-field">
+                  <label>Height (cm)</label>
+                  <input
+                      type="number"
+                      step="0.1"
+                      value={form.height}
+                      onChange={(e) => setForm({ ...form, height: e.target.value })}
+                  />
+                </div>
+                <div className="form-field">
+                  <label>Weight (kg)</label>
+                  <input
+                      type="number"
+                      step="0.1"
+                      value={form.weight}
+                      onChange={(e) => setForm({ ...form, weight: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                  Save
+                </button>
+                <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setForm(toFormState(competitor));
+                      setFormError(null);
+                      setEditing(false);
+                    }}
+                    disabled={saving}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+        ) : (
+            <div className="detail-card competitor-hero">
+              <img src={avatarSrc} alt="" className="competitor-hero__avatar" />
+
+              <div className="competitor-hero__body">
+                <p className="competitor-hero__status-line">
+              <span className={`status-${STATUS_TONE[competitor.status]}`} style={{ fontWeight: 700 }}>
+                {competitor.status}
+              </span>
+                  {" · "}
+                  {competitor.team ? (
+                      <Link to={`/teams/${competitor.team.id}`}>{competitor.team.name}</Link>
+                  ) : (
+                      "No team"
+                  )}
+                </p>
+
+                <dl className="detail-grid">
+                  <div>
+                    <dt>Origin</dt>
+                    <dd>{competitor.origin}</dd>
+                  </div>
+                  <div>
+                    <dt>Age</dt>
+                    <dd>
+                      {competitor.dateOfBirth
+                          ? new Date(competitor.dateOfBirth).toLocaleDateString()
+                          : `~${competitor.approximateAge} years`}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Height / weight</dt>
+                    <dd>
+                      {competitor.height} cm · {competitor.weight} kg
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Registered</dt>
+                    <dd>{new Date(competitor.registrationDate).toLocaleDateString()}</dd>
+                  </div>
+                  <div>
+                    <dt>Record</dt>
+                    <dd>
+                      {competitor.victories}W – {competitor.defeats}L · {competitor.completedRaces} races
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              {isAdministrator && (
+                  <div className="competitor-hero__status-panel">
+                    <span className="competitor-hero__status-panel-label">Change status</span>
+                    <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as CompetitorStatus)}>
+                      <option value="ACTIVE">Active</option>
+                      <option value="INJURED">Injured</option>
+                      <option value="SUSPENDED">Suspended</option>
+                      <option value="RETIRED">Retired</option>
+                    </select>
+                    <button
+                        className={`btn btn-secondary${justApplied ? " btn--confirmed" : ""}`}
+                        onClick={handleStatusChange}
+                        disabled={saving || statusDraft === competitor.status}
+                    >
+                      {justApplied ? "Applied ✓" : "Apply"}
+                    </button>
+                  </div>
+              )}
+            </div>
         )}
       </div>
-      <p className="app-content__subtitle">
-        <span className={`status-${STATUS_TONE[competitor.status]}`} style={{ fontWeight: 700 }}>
-          {competitor.status}
-        </span>
-        {" · "}
-        {competitor.team ? (
-          <Link to={`/teams/${competitor.team.id}`}>{competitor.team.name}</Link>
-        ) : (
-          "No team"
-        )}
-      </p>
-
-      {formError && (
-        <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
-          <p>{formError}</p>
-        </div>
-      )}
-
-      {editing ? (
-        <div className="detail-card">
-          <div className="detail-grid">
-            <div className="form-field">
-              <label>Name</label>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            </div>
-            <div className="form-field">
-              <label>Nickname</label>
-              <input value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
-            </div>
-            <div className="form-field">
-              <label>Type</label>
-              <select
-                value={form.competitorType}
-                onChange={(e) => setForm({ ...form, competitorType: e.target.value as CompetitorType })}
-              >
-                <option value="CAMEL">Camel</option>
-                <option value="DWARF">Dwarf</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
-            <div className="form-field">
-              <label>Origin</label>
-              <input value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} />
-            </div>
-            <div className="form-field">
-              <label>Date of birth</label>
-              <input
-                type="date"
-                value={form.dateOfBirth}
-                onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
-              />
-            </div>
-            <div className="form-field">
-              <label>Approximate age (if no date of birth)</label>
-              <input
-                type="number"
-                value={form.approximateAge}
-                onChange={(e) => setForm({ ...form, approximateAge: e.target.value })}
-              />
-            </div>
-            <div className="form-field">
-              <label>Height (cm)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={form.height}
-                onChange={(e) => setForm({ ...form, height: e.target.value })}
-              />
-            </div>
-            <div className="form-field">
-              <label>Weight (kg)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={form.weight}
-                onChange={(e) => setForm({ ...form, weight: e.target.value })}
-              />
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-              Save
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={() => {
-                setForm(toFormState(competitor));
-                setFormError(null);
-                setEditing(false);
-              }}
-              disabled={saving}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="detail-card">
-          <dl className="detail-grid">
-            <div>
-              <dt>Origin</dt>
-              <dd>{competitor.origin}</dd>
-            </div>
-            <div>
-              <dt>Age</dt>
-              <dd>
-                {competitor.dateOfBirth
-                  ? new Date(competitor.dateOfBirth).toLocaleDateString()
-                  : `~${competitor.approximateAge} years`}
-              </dd>
-            </div>
-            <div>
-              <dt>Height / weight</dt>
-              <dd>
-                {competitor.height} cm · {competitor.weight} kg
-              </dd>
-            </div>
-            <div>
-              <dt>Registered</dt>
-              <dd>{new Date(competitor.registrationDate).toLocaleDateString()}</dd>
-            </div>
-            <div>
-              <dt>Record</dt>
-              <dd>
-                {competitor.victories}W – {competitor.defeats}L · {competitor.completedRaces} races
-              </dd>
-            </div>
-          </dl>
-        </div>
-      )}
-
-      {isAdministrator && !editing && (
-        <div className="detail-card" style={{ marginTop: 16 }}>
-          <h3>Change status</h3>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as CompetitorStatus)}>
-              <option value="ACTIVE">Active</option>
-              <option value="INJURED">Injured</option>
-              <option value="SUSPENDED">Suspended</option>
-              <option value="RETIRED">Retired</option>
-            </select>
-            <button
-              className="btn btn-secondary"
-              onClick={handleStatusChange}
-              disabled={saving || statusDraft === competitor.status}
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
