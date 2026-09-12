@@ -77,7 +77,10 @@ export function TeamDetailPage() {
     competitorsApi
         .getAllList()
         .then((all) =>
-            setCandidates(all.filter((c) => c.status === "ACTIVE" && !c.team))
+            // Only rule for joining a team is "not retired" — injured/suspended
+            // competitors can still be assigned, they just can't race while
+            // in that state.
+            setCandidates(all.filter((c) => c.status !== "RETIRED" && !c.team))
         )
         .catch(() => setCandidates([]));
   }, [isAdministrator, team?.id]);
@@ -188,7 +191,11 @@ export function TeamDetailPage() {
 
   async function handleDeactivate() {
     if (!id || !team) return;
-    if (!window.confirm(`Deactivate ${team.name}? Its race history is kept, but it can't enter new races.`)) {
+    if (
+        !window.confirm(
+            `Remove ${team.name}? If it has no official race history this deletes it permanently; otherwise it'll be deactivated and its history kept.`
+        )
+    ) {
       return;
     }
     setSaving(true);
@@ -385,7 +392,7 @@ export function TeamDetailPage() {
                       {candidates === null
                           ? "Loading eligible competitors..."
                           : candidates.length === 0
-                              ? "No active, team-less competitors available"
+                              ? "No eligible, team-less competitors available"
                               : "Add a competitor..."}
                     </option>
                     {candidates?.map((c) => (

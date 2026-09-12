@@ -148,7 +148,11 @@ export function CompetitorDetailPage() {
 
   async function handleRetire() {
     if (!id || !competitor) return;
-    if (!window.confirm(`Retire ${competitor.name}? This preserves race history but removes them from active competition.`)) {
+    if (
+        !window.confirm(
+            `Remove ${competitor.name}? If they have no official race results this deletes them permanently; otherwise they'll be retired and their race history kept.`
+        )
+    ) {
       return;
     }
     setSaving(true);
@@ -183,9 +187,11 @@ export function CompetitorDetailPage() {
                   <button className="btn btn-secondary" onClick={() => setEditing(true)}>
                     Edit
                   </button>
-                  <button className="btn btn-danger" onClick={handleRetire} disabled={saving}>
-                    Retire
-                  </button>
+                  {competitor.status !== "RETIRED" && (
+                      <button className="btn btn-danger" onClick={handleRetire} disabled={saving}>
+                        Retire
+                      </button>
+                  )}
                 </div>
             )}
           </div>
@@ -325,22 +331,28 @@ export function CompetitorDetailPage() {
                 </div>
 
                 {isAdministrator && (
-                    <div className="competitor-hero__status-panel">
-                      <span className="competitor-hero__status-panel-label">Change status</span>
-                      <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as CompetitorStatus)}>
-                        <option value="ACTIVE">Active</option>
-                        <option value="INJURED">Injured</option>
-                        <option value="SUSPENDED">Suspended</option>
-                        <option value="RETIRED">Retired</option>
-                      </select>
-                      <button
-                          className={`btn btn-secondary${justApplied ? " btn--confirmed" : ""}`}
-                          onClick={handleStatusChange}
-                          disabled={saving || statusDraft === competitor.status}
-                      >
-                        {justApplied ? "Applied ✓" : "Apply"}
-                      </button>
-                    </div>
+                    competitor.status === "RETIRED" ? (
+                        <p className="competitor-hero__status-panel-label" style={{ opacity: 0.7 }}>
+                          This competitor has retired and can't be reactivated.
+                        </p>
+                    ) : (
+                        <div className="competitor-hero__status-panel">
+                          <span className="competitor-hero__status-panel-label">Change status</span>
+                          <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as CompetitorStatus)}>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INJURED">Injured</option>
+                            <option value="SUSPENDED">Suspended</option>
+                            <option value="RETIRED">Retired</option>
+                          </select>
+                          <button
+                              className={`btn btn-secondary${justApplied ? " btn--confirmed" : ""}`}
+                              onClick={handleStatusChange}
+                              disabled={saving || statusDraft === competitor.status}
+                          >
+                            {justApplied ? "Applied ✓" : "Apply"}
+                          </button>
+                        </div>
+                    )
                 )}
               </div>
           )}
