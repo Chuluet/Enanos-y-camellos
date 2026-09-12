@@ -140,7 +140,9 @@ export function CompetitorListPage() {
                                             className="sheet-row__avatar"
                                         />
                                         <div className="sheet-row__body">
-                                            <div className="sheet-row__title">{c.name}</div>
+                                            <div className="sheet-row__title">
+                                                {c.name} <span className="sheet-row__nickname">"{c.nickname}"</span>
+                                            </div>
                                             <div className="sheet-row__meta">
                                                 <span>{c.team ? c.team.name : "No team"}</span>
                                                 <span>{c.competitorType}</span>

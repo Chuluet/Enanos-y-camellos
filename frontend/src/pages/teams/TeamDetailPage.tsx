@@ -2,14 +2,21 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { teamsApi } from "../../api/teams";
 import { competitorsApi } from "../../api/competitors";
-import type { CompetitorResponse, TeamResponse, TeamStatus } from "../../api/types";
+import type {CompetitorResponse, CompetitorStatus, TeamResponse, TeamStatus} from "../../api/types";
 import { ApiError } from "../../api/apiClient";
 import { useRoles } from "../../auth/useRoles";
+import dwarfBg from "../../assets/dwarf.jpg";
 
 const STATUS_TONE: Record<TeamStatus, string> = {
   ACTIVE: "oasis",
   SUSPENDED: "gold",
   INACTIVE: "stone",
+};
+const COMPETITOR_TONE: Record<CompetitorStatus, string> = {
+  ACTIVE: "oasis",
+  INJURED: "rust",
+  SUSPENDED: "gold",
+  RETIRED: "stone",
 };
 
 type FormState = {
@@ -65,7 +72,6 @@ export function TeamDetailPage() {
 
   useEffect(load, [id]);
 
-  // Only administrators need the "add member" picker, so only fetch it for them.
   useEffect(() => {
     if (!isAdministrator || !team) return;
     competitorsApi
@@ -76,23 +82,31 @@ export function TeamDetailPage() {
         .catch(() => setCandidates([]));
   }, [isAdministrator, team?.id]);
 
+  const bg = <div className="page-bg-fixed" style={{ backgroundImage: `url(${dwarfBg})` }} />;
+
   if (error) {
     return (
-        <div className="state-box state-box--error">
-          <p>{error}</p>
-          <Link to="/teams" className="btn btn-secondary">
-            Back to teams
-          </Link>
-        </div>
+        <>
+          {bg}
+          <div className="state-box state-box--error">
+            <p>{error}</p>
+            <Link to="/teams" className="btn btn-secondary">
+              Back to teams
+            </Link>
+          </div>
+        </>
     );
   }
 
   if (!team || !form) {
     return (
-        <div className="state-box">
-          <div className="spinner" />
-          <p>Loading team...</p>
-        </div>
+        <>
+          {bg}
+          <div className="state-box">
+            <div className="spinner" />
+            <p>Loading team...</p>
+          </div>
+        </>
     );
   }
 
@@ -188,193 +202,209 @@ export function TeamDetailPage() {
   }
 
   return (
-      <div>
-        <div className="app-content__header">
-          <h1>{team.name}</h1>
-          {isAdministrator && !editing && (
-              <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn btn-secondary" onClick={() => setEditing(true)}>
-                  Edit
-                </button>
-                <button className="btn btn-danger" onClick={handleDeactivate} disabled={saving}>
-                  Deactivate
-                </button>
+      <>
+        {bg}
+        <div>
+          <Link to="/teams" className="page-breadcrumb">
+            ← Back to teams
+          </Link>
+
+          <div className="app-content__header">
+            <h1>{team.name}</h1>
+            {isAdministrator && !editing && (
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button className="btn btn-secondary" onClick={() => setEditing(true)}>
+                    Edit
+                  </button>
+                  <button className="btn btn-danger" onClick={handleDeactivate} disabled={saving}>
+                    Deactivate
+                  </button>
+                </div>
+            )}
+          </div>
+          <p className="app-content__subtitle">
+            <span className={`sheet-row__status status-${STATUS_TONE[team.status]}`}>
+              {team.status}
+            </span>
+            {" · "}Coach: {team.coach}
+          </p>
+
+          {actionError && (
+              <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
+                <p>{actionError}</p>
               </div>
           )}
-        </div>
-        <p className="app-content__subtitle">
-        <span className={`status-${STATUS_TONE[team.status]}`} style={{ fontWeight: 700 }}>
-          {team.status}
-        </span>
-          {" · "}Coach: {team.coach}
-        </p>
 
-        {actionError && (
-            <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
-              <p>{actionError}</p>
-            </div>
-        )}
-
-        {editing ? (
-            <div className="detail-card">
-              <div className="detail-grid">
-                <div className="form-field">
-                  <label>Name</label>
-                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                </div>
-                <div className="form-field">
-                  <label>Coach</label>
-                  <input value={form.coach} onChange={(e) => setForm({ ...form, coach: e.target.value })} />
-                </div>
-                <div className="form-field">
-                  <label>Max members</label>
-                  <input
-                      type="text"
-                      inputMode="numeric"
-                      value={form.maxMembers}
-                      onChange={(e) =>
-                          setForm({ ...form, maxMembers: e.target.value.replace(/[^0-9]/g, "") })
-                      }
-                  />
-                  {Number(form.maxMembers) < team.members.length && (
-                      <span className="field-error">
-                  Can't be below the current member count ({team.members.length}).
-                </span>
-                  )}
-                </div>
-                <div className="form-field" style={{ gridColumn: "1 / -1" }}>
-                  <label>Description</label>
-                  <textarea
-                      rows={2}
-                      value={form.description}
-                      onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                  Save
-                </button>
-                <button
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      setForm(toFormState(team));
-                      setActionError(null);
-                      setEditing(false);
-                    }}
-                    disabled={saving}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-        ) : (
-            <div className="detail-card">
-              <dl className="detail-grid">
-                <div>
-                  <dt>Description</dt>
-                  <dd>{team.description || "—"}</dd>
-                </div>
-                <div>
-                  <dt>Created</dt>
-                  <dd>{new Date(team.creationDate).toLocaleDateString()}</dd>
-                </div>
-                <div>
-                  <dt>Record</dt>
-                  <dd>
-                    {team.victories}W – {team.defeats}L
-                  </dd>
-                </div>
-                <div>
-                  <dt>Capacity</dt>
-                  <dd>
-                    {team.members.length} / {team.maxMembers} members
-                  </dd>
-                </div>
-              </dl>
-
-              {isAdministrator && (
-                  <div className="competitor-hero__status-panel">
-                    <span className="competitor-hero__status-panel-label">Change status</span>
-                    <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as TeamStatus)}>
-                      <option value="ACTIVE">Active</option>
-                      <option value="SUSPENDED">Suspended</option>
-                      <option value="INACTIVE">Inactive</option>
-                    </select>
-                    <button
-                        className={`btn btn-secondary${justApplied ? " btn--confirmed" : ""}`}
-                        onClick={handleStatusChange}
-                        disabled={saving || statusDraft === team.status}
-                    >
-                      {justApplied ? "Applied ✓" : "Apply"}
-                    </button>
+          {editing ? (
+              <div className="detail-card form-card">
+                <div className="detail-grid">
+                  <div className="form-field">
+                    <label>Name</label>
+                    <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                   </div>
-              )}
-            </div>
-        )}
-
-        <div className="detail-card" style={{ marginTop: 16 }}>
-          <h3>Members</h3>
-          {team.members.length === 0 ? (
-              <p style={{ opacity: 0.6, fontSize: 13 }}>No members yet.</p>
+                  <div className="form-field">
+                    <label>Coach</label>
+                    <input value={form.coach} onChange={(e) => setForm({ ...form, coach: e.target.value })} />
+                  </div>
+                  <div className="form-field">
+                    <label>Max members</label>
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        value={form.maxMembers}
+                        onChange={(e) =>
+                            setForm({ ...form, maxMembers: e.target.value.replace(/[^0-9]/g, "") })
+                        }
+                    />
+                    {Number(form.maxMembers) < team.members.length && (
+                        <span className="field-error">
+                          Can't be below the current member count ({team.members.length}).
+                        </span>
+                    )}
+                  </div>
+                  <div className="form-field" style={{ gridColumn: "1 / -1" }}>
+                    <label>Description</label>
+                    <textarea
+                        rows={2}
+                        value={form.description}
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                    Save
+                  </button>
+                  <button
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setForm(toFormState(team));
+                        setActionError(null);
+                        setEditing(false);
+                      }}
+                      disabled={saving}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
           ) : (
-              <div className="sheet">
-                {team.members.map((m) => (
-                    <div key={m.id} className="sheet-row" style={{ cursor: "default" }}>
-                      <span className="sheet-row__stripe stripe-oasis" />
-                      <div className="sheet-row__body">
-                        <Link to={`/competitors/${m.id}`} className="sheet-row__title">
-                          {m.name} <span style={{ opacity: 0.6, fontWeight: 400 }}>“{m.nickname}”</span>
-                        </Link>
-                        <div className="sheet-row__meta">
-                          <span>{m.competitorType}</span>
-                          <span>{m.status}</span>
-                        </div>
-                      </div>
-                      {isAdministrator && (
-                          <button
-                              className="btn btn-secondary"
-                              onClick={() => handleRemoveMember(m.id, m.name)}
-                              disabled={saving}
-                          >
-                            Remove
-                          </button>
-                      )}
+              <div className="detail-card">
+                <dl className="detail-grid">
+                  <div>
+                    <dt>Description</dt>
+                    <dd>{team.description || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Created</dt>
+                    <dd>{new Date(team.creationDate).toLocaleDateString()}</dd>
+                  </div>
+                  <div>
+                    <dt>Record</dt>
+                    <dd>
+                      {team.victories}W – {team.defeats}L
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Capacity</dt>
+                    <dd>
+                      {team.members.length} / {team.maxMembers} members
+                    </dd>
+                  </div>
+                </dl>
+
+                {isAdministrator && (
+                    <div className="competitor-hero__status-panel">
+                      <span className="competitor-hero__status-panel-label">Change status</span>
+                      <select value={statusDraft} onChange={(e) => setStatusDraft(e.target.value as TeamStatus)}>
+                        <option value="ACTIVE">Active</option>
+                        <option value="SUSPENDED">Suspended</option>
+                        <option value="INACTIVE">Inactive</option>
+                      </select>
+                      <button
+                          className={`btn btn-secondary${justApplied ? " btn--confirmed" : ""}`}
+                          onClick={handleStatusChange}
+                          disabled={saving || statusDraft === team.status}
+                      >
+                        {justApplied ? "Applied ✓" : "Apply"}
+                      </button>
                     </div>
-                ))}
+                )}
               </div>
           )}
 
-          {isAdministrator && (
-              <div style={{ display: "flex", gap: 8, marginTop: 14, alignItems: "center" }}>
-                <select
-                    value={selectedCandidate}
-                    onChange={(e) => setSelectedCandidate(e.target.value)}
-                    disabled={!candidates || candidates.length === 0}
-                >
-                  <option value="">
-                    {candidates === null
-                        ? "Loading eligible competitors..."
-                        : candidates.length === 0
-                            ? "No active, team-less competitors available"
-                            : "Add a competitor..."}
-                  </option>
-                  {candidates?.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.nickname})
-                      </option>
+          <div className="detail-card" style={{ marginTop: 16 }}>
+            <h3>Members</h3>
+            {team.members.length === 0 ? (
+                <p style={{ opacity: 0.6, fontSize: 13 }}>No members yet.</p>
+            ) : (
+                <div className="sheet">
+                  {team.members.map((m, index) => (
+                      <div
+                          key={m.id}
+                          className="sheet-row sheet-row--team cascade"
+                          style={{ cursor: "default", animationDelay: `${index * 40}ms` }}
+                      >
+                        <span className="avatar-chip avatar-chip--lg" title={m.name}>
+                          {m.nickname.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="sheet-row__body">
+                          <Link to={`/competitors/${m.id}`} className="sheet-row__title">
+                            {m.name}{" "}
+                            <span className="sheet-row__nickname">"{m.nickname}"</span>
+                          </Link>
+                          <div className="sheet-row__meta">
+                            <span>{m.competitorType}</span>
+                          </div>
+                        </div>
+                        <span className={`sheet-row__status status-${COMPETITOR_TONE[m.status] ?? "stone"}`}>
+                          {m.status}
+                        </span>
+                        {isAdministrator && (
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => handleRemoveMember(m.id, m.name)}
+                                disabled={saving}
+                            >
+                              Remove
+                            </button>
+                        )}
+                      </div>
                   ))}
-                </select>
-                <button
-                    className="btn btn-primary"
-                    onClick={handleAddMember}
-                    disabled={!selectedCandidate || saving || team.members.length >= team.maxMembers}
-                >
-                  Add
-                </button>
-              </div>
-          )}
+                </div>
+            )}
+
+            {isAdministrator && (
+                <div style={{ display: "flex", gap: 12, marginTop: 14, alignItems: "center" }}>
+                  <select
+                      value={selectedCandidate}
+                      onChange={(e) => setSelectedCandidate(e.target.value)}
+                      disabled={!candidates || candidates.length === 0}
+                  >
+                    <option value="">
+                      {candidates === null
+                          ? "Loading eligible competitors..."
+                          : candidates.length === 0
+                              ? "No active, team-less competitors available"
+                              : "Add a competitor..."}
+                    </option>
+                    {candidates?.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.nickname})
+                        </option>
+                    ))}
+                  </select>
+                  <button
+                      className="btn btn-primary"
+                      onClick={handleAddMember}
+                      disabled={!selectedCandidate || saving || team.members.length >= team.maxMembers}
+                  >
+                    Add
+                  </button>
+                </div>
+            )}
+          </div>
         </div>
-      </div>
+      </>
   );
 }
