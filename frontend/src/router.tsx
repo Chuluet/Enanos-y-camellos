@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { CallbackPage } from "./auth/CallbackPage";
+import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { RaceListPage } from "./pages/races/RaceListPage";
 import { CompetitorListPage } from "./pages/competitors/CompetitorListPage";
 import { CompetitorCreatePage } from "./pages/competitors/CompetitorCreatePage";
@@ -21,7 +22,15 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Navigate to="/races" replace />,
+                element: <Navigate to="/dashboard" replace />,
+            },
+            {
+                path: "dashboard",
+                element: (
+                    <ProtectedRoute>
+                        <DashboardPage />
+                    </ProtectedRoute>
+                ),
             },
             {
                 path: "races",
