@@ -186,6 +186,26 @@ services:
       # Le da 30 segundos de gracia al primer arranque (cuando Postgres crea la
       # base) sin contar esos intentos como fallidos.
       start_period: 30s
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8080
+        VITE_KEYCLOAK_AUTHORITY: http://localhost:${KEYCLOAK_PORT:-8180}/realms/${KEYCLOAK_REALM}
+        VITE_KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+
+    image: enanosycamellos-frontend:latest
+    pull_policy: build
+    container_name: enanosycamellos-frontend
+    restart: unless-stopped
+
+    ports:
+      - "8081:80"
+
+    depends_on:
+      app:
+        condition: service_started
 
 volumes:
   postgres_data:

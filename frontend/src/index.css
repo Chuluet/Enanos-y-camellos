@@ -9,6 +9,8 @@
   --rust: oklch(0.55 0.24 22);            /* crimson accent (was rust) */
   --rust-dark: oklch(0.45 0.22 22);
   --gold: oklch(0.78 0.17 220);           /* electric blue (was gold) */
+  --amber: oklch(0.75 0.15 70);   
+  --violet: oklch(0.62 0.14 300);         /* muted violet — for COMPLETED, distinct from all others */
   --oasis: oklch(0.62 0.15 200);          /* teal-cyan accent (was oasis) */
   --stone: oklch(0.82 0.07 235);          /* muted foreground (was stone) */
 
@@ -331,10 +333,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .status-gold { color: var(--gold); }
 .status-stone { color: var(--stone); }
 .status-rust { color: var(--rust); }
+.status-amber { color: var(--amber); }
+.status-violet { color: var(--violet); }
 .stripe-oasis { background: var(--oasis); }
 .stripe-gold { background: var(--gold); }
 .stripe-stone { background: var(--stone); }
 .stripe-rust { background: var(--rust); }
+.stripe-amber { background: var(--amber); }
+.stripe-violet { background: var(--violet); }
 
 /* ============================== Larger competitor rows ============================== */
 .sheet-row--competitor {
