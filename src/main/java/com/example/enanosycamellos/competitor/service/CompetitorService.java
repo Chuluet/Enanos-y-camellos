@@ -135,12 +135,21 @@ public class CompetitorService {
     /**
      * Changes only the status (PATCH /status), e.g. ACTIVE -> INJURED after
      * a race, or -> SUSPENDED by an administrator.
+     *
+     * <p>RETIRED is terminal: once a competitor retires, no further status
+     * change is allowed (not even a no-op "RETIRED -> RETIRED"), whether it
+     * happened through this endpoint or through {@link #retire}.</p>
      */
     @Transactional
     public CompetitorResponse changeStatus(UUID id, CompetitorStatusUpdateRequest request) {
         Competitor competitor = competitorRepository.findWithTeamById(id)
                 .orElseThrow(() -> ResourceNotFoundException.of("Competitor", id));
 
+        if (competitor.getStatus() == CompetitorStatus.RETIRED) {
+            throw new ConflictException(
+                    "Competitor '%s' has retired and cannot be reactivated or change status"
+                            .formatted(competitor.getNickname()));
+        }
         if (competitor.getStatus() == request.status()) {
             throw new ConflictException(
                     "Competitor '%s' already has status %s"
@@ -154,20 +163,41 @@ public class CompetitorService {
     }
 
     /**
-     * "Delete" a competitor: per Module 2, one with official results cannot
-     * be physically deleted, only retired. Since the Results module doesn't
-     * exist yet, this deactivates unconditionally for now — once
-     * {@code RaceResult} exists, add a check here before allowing it
-     * (same pending TODO as {@code TeamService.deactivate}).
+     * "Delete" a competitor. Per Module 2, one with official race results
+     * cannot be physically deleted — it must be retired instead, preserving
+     * its history. One with no official results has nothing to preserve, so
+     * it's removed outright.
+     *
+     * <p>Idempotent for already-retired competitors that do have history:
+     * calling this again just re-confirms RETIRED. A competitor that was
+     * already physically deleted simply won't be found anymore.</p>
      */
     @Transactional
     public void retire(UUID id) {
         Competitor competitor = competitorRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.of("Competitor", id));
 
-        competitor.setStatus(CompetitorStatus.RETIRED);
-        competitorRepository.save(competitor);
-        log.info("Competitor retired id={}", id);
+        if (hasOfficialResults(competitor)) {
+            competitor.setStatus(CompetitorStatus.RETIRED);
+            competitorRepository.save(competitor);
+            log.info("Competitor retired id={} (has official results)", id);
+            return;
+        }
+
+        competitorRepository.delete(competitor);
+        log.info("Competitor permanently deleted id={} (no official results)", id);
+    }
+
+    /**
+     * Whether this competitor has an official race history. Relies on
+     * {@code completedRaces} rather than a separate query against results:
+     * per the assignment, "updating a result must update statistics
+     * consistently", so this counter is kept in sync with every officially
+     * recorded result (win, loss, DNF or DSQ alike) and is a direct,
+     * authoritative answer to "has this competitor officially raced?".
+     */
+    private boolean hasOfficialResults(Competitor competitor) {
+        return competitor.getCompletedRaces() > 0;
     }
 
     @Transactional

@@ -202,9 +202,9 @@ public class TeamService {
         Competitor competitor = competitorRepository.findById(competitorId)
                 .orElseThrow(() -> ResourceNotFoundException.of("Competitor", competitorId));
 
-        if (competitor.getStatus() != CompetitorStatus.ACTIVE) {
-            throw new BadRequestException(
-                    "Competitor '%s' is not active".formatted(competitor.getNickname()));
+        if (competitor.getStatus() == CompetitorStatus.RETIRED) {
+            throw new ConflictException(
+                    "Competitor '%s' is retired and cannot join a team".formatted(competitor.getNickname()));
         }
         if (competitor.getTeam() != null) {
             throw new ConflictException(
@@ -241,19 +241,44 @@ public class TeamService {
     }
 
     /**
-     * "Delete" a team: per the assignment, a team with race history cannot be
-     * physically deleted, only deactivated. Since the Race module doesn't
-     * exist yet, this currently deactivates unconditionally — once
-     * {@code RaceRegistration} exists, add a check here before allowing it.
+     * "Delete" a team. Per the assignment, one with official race history
+     * cannot be physically deleted — it must be deactivated instead, keeping
+     * that history. One with no race history has nothing to preserve, so
+     * it's removed outright; its members are detached first so each
+     * competitor's {@code team_id} is cleared before the team row goes away.
      */
     @Transactional
     public void deactivate(UUID id) {
-        Team team = teamRepository.findById(id)
+        Team team = teamRepository.findWithMembersById(id)
                 .orElseThrow(() -> ResourceNotFoundException.of("Team", id));
 
-        team.setStatus(TeamStatus.INACTIVE);
-        teamRepository.save(team);
-        log.info("Team deactivated id={}", id);
+        if (hasOfficialRaceHistory(team)) {
+            team.setStatus(TeamStatus.INACTIVE);
+            teamRepository.save(team);
+            log.info("Team deactivated id={} (has official race history)", id);
+            return;
+        }
+
+        for (Competitor member : List.copyOf(team.getMembers())) {
+            team.removeMember(member);
+            competitorRepository.save(member);
+        }
+        teamRepository.delete(team);
+        log.info("Team permanently deleted id={} (no official race history)", id);
+    }
+
+    /**
+     * Whether this team has official race history. Relies on
+     * {@code victories}/{@code defeats} rather than a separate query
+     * against results, same reasoning as {@code CompetitorService}. Note:
+     * unlike {@code Competitor}, {@code Team} has no {@code completedRaces}
+     * counter, so a team whose only official results were DNF/DSQ (neither
+     * a win nor a loss) would read as having no history here. If that edge
+     * case matters, add a {@code completedRaces} counter to {@code Team}
+     * (mirroring {@code Competitor}) and check that instead.
+     */
+    private boolean hasOfficialRaceHistory(Team team) {
+        return team.getVictories() > 0 || team.getDefeats() > 0;
     }
 
     // ============================= Utilities ============================
@@ -273,9 +298,9 @@ public class TeamService {
             Competitor competitor = competitorRepository.findById(competitorId)
                     .orElseThrow(() -> ResourceNotFoundException.of("Competitor", competitorId));
 
-            if (competitor.getStatus() != CompetitorStatus.ACTIVE) {
-                throw new BadRequestException(
-                        "Competitor '%s' is not active".formatted(competitor.getNickname()));
+            if (competitor.getStatus() == CompetitorStatus.RETIRED) {
+                throw new ConflictException(
+                        "Competitor '%s' is retired and cannot join a team".formatted(competitor.getNickname()));
             }
             if (competitor.getTeam() != null) {
                 throw new ConflictException(
