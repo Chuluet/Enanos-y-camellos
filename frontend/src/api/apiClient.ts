@@ -8,6 +8,7 @@ export interface ApiErrorResponse {
   error: string;
   message: string;
   path: string;
+  validationErrors?: Record<string, string>;
 }
 
 export class ApiError extends Error {
