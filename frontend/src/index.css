@@ -229,7 +229,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 /* ============================== Breadcrumb ============================== */
 .page-breadcrumb {
-  display: inline-flex;
+  display: flex;              /* antes: inline-flex */
+  width: fit-content;
   align-items: center;
   gap: 6px;
   font-size: 0.7rem;
@@ -239,6 +240,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
   color: var(--gold);
   margin-bottom: var(--space-3);
 }
+.page-breadcrumb:hover { text-decoration: none; filter: brightness(1.2); }
 .page-breadcrumb:hover { text-decoration: none; filter: brightness(1.2); }
 
 /* ============================== Title banner (shear) ============================== */
@@ -321,20 +323,48 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 }
 
 .sheet-row__status {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  line-height: 1;
 }
 
-/* Status color roles — shared meaning across the whole app */
-.status-oasis { color: var(--oasis); }
-.status-gold { color: var(--gold); }
-.status-stone { color: var(--stone); }
-.status-rust { color: var(--rust); }
-.status-amber { color: var(--amber); }
-.status-violet { color: var(--violet); }
+/* Status color roles — badge style for stronger contrast */
+.status-oasis {
+  color: oklch(0.95 0.05 200);
+  background: oklch(0.62 0.15 200 / 22%);
+  border-color: oklch(0.62 0.15 200 / 55%);
+}
+.status-gold {
+  color: oklch(0.97 0.03 220);
+  background: oklch(0.78 0.17 220 / 22%);
+  border-color: oklch(0.78 0.17 220 / 55%);
+}
+.status-stone {
+  color: oklch(0.95 0.02 235);
+  background: oklch(0.82 0.07 235 / 18%);
+  border-color: oklch(0.82 0.07 235 / 45%);
+}
+.status-rust {
+  color: oklch(0.97 0.03 22);
+  background: oklch(0.55 0.24 22 / 26%);
+  border-color: oklch(0.55 0.24 22 / 60%);
+}
+.status-amber {
+  color: oklch(0.97 0.03 70);
+  background: oklch(0.75 0.15 70 / 22%);
+  border-color: oklch(0.75 0.15 70 / 55%);
+}
+.status-violet {
+  color: oklch(0.97 0.03 300);
+  background: oklch(0.62 0.14 300 / 22%);
+  border-color: oklch(0.62 0.14 300 / 55%);
+}
 .stripe-oasis { background: var(--oasis); }
 .stripe-gold { background: var(--gold); }
 .stripe-stone { background: var(--stone); }
@@ -372,8 +402,9 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
   gap: var(--space-3);
 }
 .sheet-row--competitor .sheet-row__status {
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  padding: 7px 16px;
 }
 
 /* ============================== States: loading / empty / error ============================== */
@@ -531,6 +562,15 @@ button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .avatar-chip:first-child { margin-left: 0; }
 .avatar-chip--overflow { background: var(--color-border-strong); color: var(--sand-light); }
 
+.sheet-row__nickname {
+  font-family: var(--font-body);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.65;
+  font-size: 1.05em;
+}
+
 /* ============================== Competitor hero (detail page) ============================== */
 .competitor-hero {
   display: flex;
@@ -659,3 +699,126 @@ select:focus {
   box-shadow: 0 0 0 3px oklch(0.78 0.17 220 / 20%);
 }
 select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ============================== Form header (create page avatar) ============================== */
+.form-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  text-align: center;
+}
+.form-header__avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--gold);
+  background: var(--track);
+  box-shadow: 0 0 32px -6px oklch(0.78 0.17 220 / 55%);
+}
+
+/* ============================== Form layout ============================== */
+.form-card {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.form-section { margin-bottom: var(--space-5); }
+.form-section:last-of-type { margin-bottom: var(--space-4); }
+.form-section h3 {
+  color: var(--gold);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.85rem;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4) var(--space-5);
+}
+.form-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+/* ============================== Teams: alt accent variant ============================== */
+.page-title-banner--teams {
+  background: var(--oasis);
+  clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%); /* mirrored skew vs competitors' banner */
+  box-shadow: 0 10px 28px -10px oklch(0.62 0.15 200 / 60%);
+}
+
+.team-card {
+  border-left: 3px solid var(--oasis);
+}
+.team-card:hover {
+  border-left-color: var(--gold);
+}
+
+.avatar-chip--lg {
+  width: 40px;
+  height: 40px;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  margin-left: -10px;
+}
+.avatar-chip--lg:first-child { margin-left: 0; }
+
+.sheet-row--team {
+  padding: var(--space-4) var(--space-5);
+  gap: var(--space-5);
+}
+.sheet-row--team .sheet-row__title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+/* ============================== Dashboard (Tablero) ============================== */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-5) 0;
+}
+
+.stat-card {
+  background: linear-gradient(100deg, oklch(0.2 0.1 264 / 85%), oklch(0.3 0.16 258 / 70%));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+}
+
+.stat-card__value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.stat-card__label {
+  margin-top: var(--space-2);
+  font-size: 0.8rem;
+  color: var(--stone);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.featured-race { margin-bottom: var(--space-2); }
+
+.featured-race__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.featured-race__meta {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--stone);
+}

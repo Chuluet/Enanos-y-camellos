@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { resultsApi } from "../../api/results";
 import { registrationsApi } from "../../api/registrations";
-import type { RaceResult, Registration, ResultStatus, Race } from "../../api/types";
+import type { RaceResultResponse, Registration, ResultStatus, Race } from "../../api/types";
 import { ApiError } from "../../api/apiClient";
 import { useAuth } from "react-oidc-context";
 import { useRoles } from "../../auth/useRoles";
@@ -17,7 +17,7 @@ export function RaceResults({ race }: { race: Race }) {
   const auth = useAuth();
   const { canWrite } = useRoles();
 
-  const [results, setResults] = useState<RaceResult[] | null>(null);
+const [results, setResults] = useState<RaceResultResponse[] | null>(null);
   const [approvedRegistrations, setApprovedRegistrations] = useState<Registration[]>([]);
   const [error, setError] = useState<string | null>(null);
 

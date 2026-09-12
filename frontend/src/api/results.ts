@@ -1,12 +1,13 @@
 import { apiClient } from "./apiClient";
-import type { RaceResult, CreateResultInput } from "./types";
+import type { RaceResultResponse, CreateResultInput } from "./types";
 
 export const resultsApi = {
+  /** GET /api/races/{raceId}/results */
   getByRace: (raceId: string) =>
-    apiClient.get<RaceResult[]>(`/api/races/${raceId}/results`),
+    apiClient.get<RaceResultResponse[]>(`/api/races/${raceId}/results`),
 
-  getById: (id: string) => apiClient.get<RaceResult>(`/api/results/${id}`),
+  getById: (id: string) => apiClient.get<RaceResultResponse>(`/api/results/${id}`),
 
   record: (raceId: string, data: CreateResultInput) =>
-    apiClient.post<RaceResult>(`/api/races/${raceId}/results`, data),
+    apiClient.post<RaceResultResponse>(`/api/races/${raceId}/results`, data),
 };

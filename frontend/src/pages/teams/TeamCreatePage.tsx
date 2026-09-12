@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { teamsApi } from "../../api/teams";
 import { ApiError } from "../../api/apiClient";
+import dwarfBg from "../../assets/dwarf.jpg";
 
 type FormState = {
     name: string;
@@ -17,8 +18,6 @@ const EMPTY_FORM: FormState = {
     maxMembers: "",
 };
 
-/** Strips everything except digits, so typing/pasting can never produce a
- * negative or decimal value. maxMembers should always be a whole number. */
 function sanitizeWholeNumber(value: string): string {
     return value.replace(/[^0-9]/g, "");
 }
@@ -84,73 +83,72 @@ export function TeamCreatePage() {
     }
 
     return (
-        <div>
-            <Link to="/teams" className="back-link">
-                ← Back to teams
-            </Link>
+        <>
+            <div className="page-bg-fixed" style={{ backgroundImage: `url(${dwarfBg})` }} />
+            <div>
+                <Link to="/teams" className="page-breadcrumb">
+                    ← Back to teams
+                </Link>
 
-            <div className="form-header">
-                <div>
-                    <h1>New team</h1>
-                    <p className="app-content__subtitle" style={{ marginBottom: 0 }}>
-                        Register a team so competitors can be assigned to it.
-                    </p>
-                </div>
-            </div>
+                <h1 className="page-title-banner page-title-banner--teams">New team</h1>
+                <p className="app-content__subtitle" style={{ textAlign: "center" }}>
+                    Register a team so competitors can be assigned to it.
+                </p>
 
-            {formError && (
-                <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
-                    <p>{formError}</p>
-                </div>
-            )}
+                {formError && (
+                    <div className="state-box state-box--error" style={{ marginBottom: 16 }}>
+                        <p>{formError}</p>
+                    </div>
+                )}
 
-            <form onSubmit={handleSubmit} className="detail-card form-card">
-                <div className="form-section">
-                    <h3>Identity</h3>
-                    <div className="form-grid">
-                        <div className="form-field">
-                            <label>Name</label>
-                            <input value={form.name} onChange={(e) => updateField("name", e.target.value)} />
-                            {fieldErrors.name && <span className="field-error">{fieldErrors.name}</span>}
-                        </div>
-                        <div className="form-field">
-                            <label>Coach</label>
-                            <input value={form.coach} onChange={(e) => updateField("coach", e.target.value)} />
-                            {fieldErrors.coach && <span className="field-error">{fieldErrors.coach}</span>}
-                        </div>
-                        <div className="form-field">
-                            <label>Max members</label>
-                            <input
-                                type="text"
-                                inputMode="numeric"
-                                value={form.maxMembers}
-                                onChange={(e) => updateField("maxMembers", sanitizeWholeNumber(e.target.value))}
-                            />
-                            {fieldErrors.maxMembers && <span className="field-error">{fieldErrors.maxMembers}</span>}
-                        </div>
-                        <div className="form-field" style={{ gridColumn: "1 / -1" }}>
-                            <label>Description</label>
-                            <textarea
-                                rows={2}
-                                value={form.description}
-                                onChange={(e) => updateField("description", e.target.value)}
-                            />
-                            {fieldErrors.description && (
-                                <span className="field-error">{fieldErrors.description}</span>
-                            )}
+                <form onSubmit={handleSubmit} className="detail-card form-card">
+                    <div className="form-section">
+                        <h3>Identity</h3>
+                        <div className="form-grid">
+                            <div className="form-field">
+                                <label>Name</label>
+                                <input value={form.name} onChange={(e) => updateField("name", e.target.value)} />
+                                {fieldErrors.name && <span className="field-error">{fieldErrors.name}</span>}
+                            </div>
+                            <div className="form-field">
+                                <label>Coach</label>
+                                <input value={form.coach} onChange={(e) => updateField("coach", e.target.value)} />
+                                {fieldErrors.coach && <span className="field-error">{fieldErrors.coach}</span>}
+                            </div>
+                            <div className="form-field">
+                                <label>Max members</label>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={form.maxMembers}
+                                    onChange={(e) => updateField("maxMembers", sanitizeWholeNumber(e.target.value))}
+                                />
+                                {fieldErrors.maxMembers && <span className="field-error">{fieldErrors.maxMembers}</span>}
+                            </div>
+                            <div className="form-field" style={{ gridColumn: "1 / -1" }}>
+                                <label>Description</label>
+                                <textarea
+                                    rows={2}
+                                    value={form.description}
+                                    onChange={(e) => updateField("description", e.target.value)}
+                                />
+                                {fieldErrors.description && (
+                                    <span className="field-error">{fieldErrors.description}</span>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="form-actions">
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                        {saving ? "Creating..." : "Create team"}
-                    </button>
-                    <Link to="/teams" className="btn btn-secondary">
-                        Cancel
-                    </Link>
-                </div>
-            </form>
-        </div>
+                    <div className="form-actions">
+                        <button type="submit" className="btn btn-primary" disabled={saving}>
+                            {saving ? "Creating..." : "Create team"}
+                        </button>
+                        <Link to="/teams" className="btn btn-secondary">
+                            Cancel
+                        </Link>
+                    </div>
+                </form>
+            </div>
+        </>
     );
 }
