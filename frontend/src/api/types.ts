@@ -1,3 +1,17 @@
+/** Mirrors Spring Data's default Page<T> JSON shape. */
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number; // current page index, 0-based
+  size: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+}
+
+/* ============================== Races ============================== */
+
 export type RaceType = "INDIVIDUAL" | "TEAM" | "MIXED";
 
 export type RaceStatus =
@@ -42,3 +56,117 @@ export interface CreateRaceInput {
 
 /** Mirrors RaceUpdateRequest.java (PUT body) — every field optional, only sent fields change */
 export type UpdateRaceInput = Partial<Omit<CreateRaceInput, "raceType" | "organizer">>;
+
+/* ============================== Competitors ============================== */
+
+export type CompetitorType = "DWARF" | "CAMEL" | "MEDIUM" | "OTHER";
+
+export type CompetitorStatus = "ACTIVE" | "INJURED" | "SUSPENDED" | "RETIRED";
+
+/** Short version used inside TeamResponse.members — mirrors CompetitorSummaryResponse.java */
+export interface CompetitorSummaryResponse {
+  id: string;
+  name: string;
+  nickname: string;
+  competitorType: CompetitorType;
+  status: CompetitorStatus;
+}
+
+/** Mirrors CompetitorResponse.java */
+export interface CompetitorResponse {
+  id: string;
+  name: string;
+  nickname: string;
+  competitorType: CompetitorType;
+  dateOfBirth: string | null; // ISO date, e.g. "1990-01-01"
+  approximateAge: number | null;
+  height: number;
+  weight: number;
+  origin: string;
+  status: CompetitorStatus;
+  registrationDate: string;
+  victories: number;
+  defeats: number;
+  completedRaces: number;
+  team: TeamSummaryResponse | null;
+}
+
+/** Mirrors CompetitorRequest.java (POST body). Provide dateOfBirth or approximateAge. */
+export interface CreateCompetitorInput {
+  name: string;
+  nickname: string;
+  competitorType: CompetitorType;
+  dateOfBirth?: string;
+  approximateAge?: number;
+  height: number;
+  weight: number;
+  origin: string;
+  status?: CompetitorStatus;
+}
+
+/** Mirrors CompetitorUpdateRequest.java (PUT body) — full replace, status/stats not editable here. */
+export interface UpdateCompetitorInput {
+  name: string;
+  nickname: string;
+  competitorType: CompetitorType;
+  dateOfBirth?: string;
+  approximateAge?: number;
+  height: number;
+  weight: number;
+  origin: string;
+}
+
+/** Mirrors CompetitorPatchRequest.java (PATCH body) — every field optional, only sent fields change. */
+export type PatchCompetitorInput = Partial<UpdateCompetitorInput>;
+
+/** Mirrors CompetitorStatusUpdateRequest.java (PATCH /{id}/status body) */
+export interface CompetitorStatusUpdateInput {
+  status: CompetitorStatus;
+}
+
+/* ============================== Teams ============================== */
+
+export type TeamStatus = "ACTIVE" | "SUSPENDED" | "INACTIVE";
+
+/** Short version used inside CompetitorResponse.team — mirrors TeamSummaryResponse.java */
+export interface TeamSummaryResponse {
+  id: string;
+  name: string;
+  status: TeamStatus;
+}
+
+/** Mirrors TeamResponse.java */
+export interface TeamResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  coach: string;
+  creationDate: string;
+  status: TeamStatus;
+  victories: number;
+  defeats: number;
+  maxMembers: number;
+  members: CompetitorSummaryResponse[];
+}
+
+/** Mirrors TeamRequest.java (POST body) */
+export interface CreateTeamInput {
+  name: string;
+  description?: string;
+  coach: string;
+  maxMembers: number;
+  status?: TeamStatus;
+  memberIds?: string[];
+}
+
+/** Mirrors TeamUpdateRequest.java (PUT body) — full replace, members/stats not editable here. */
+export interface UpdateTeamInput {
+  name: string;
+  description?: string;
+  coach: string;
+  maxMembers: number;
+  status: TeamStatus;
+}
+
+/** Mirrors TeamPatchRequest.java (PATCH body) — every field optional, only sent fields change. */
+export type PatchTeamInput = Partial<UpdateTeamInput>;
