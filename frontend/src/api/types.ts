@@ -170,3 +170,33 @@ export interface UpdateTeamInput {
 
 /** Mirrors TeamPatchRequest.java (PATCH body) — every field optional, only sent fields change. */
 export type PatchTeamInput = Partial<UpdateTeamInput>;
+
+/* ============================== Results ============================== */
+
+export type ResultStatus = "FINISHED" | "DISQUALIFIED" | "DID_NOT_FINISH" | "DID_NOT_START";
+
+/** Mirrors RaceSummaryResponse.java — used inside RaceResultResponse.race and RaceRegistrationResponse.race */
+export interface RaceSummaryResponse {
+  id: string;
+  name: string;
+  raceType: RaceType;
+  status: RaceStatus;
+  scheduledDateTime: string;
+}
+
+/** Mirrors RaceResultResponse.java. Exactly one of competitor/team is present. */
+export interface RaceResultResponse {
+  id: string;
+  registrationId: string;
+  race: RaceSummaryResponse;
+  competitor: CompetitorSummaryResponse | null;
+  team: TeamSummaryResponse | null;
+  startPosition: number | null;
+  finalPosition: number | null;
+  completionTime: number | null;
+  penaltyTime: number | null;
+  status: ResultStatus;
+  notes: string | null;
+  recordedBy: string;
+  recordedAt: string;
+}

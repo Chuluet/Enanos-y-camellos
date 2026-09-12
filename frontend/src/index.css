@@ -760,3 +760,47 @@ select:disabled { opacity: 0.5; cursor: not-allowed; }
   text-transform: uppercase;
   letter-spacing: 0.01em;
 }
+/* ============================== Dashboard (Tablero) ============================== */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-5) 0;
+}
+
+.stat-card {
+  background: linear-gradient(100deg, oklch(0.2 0.1 264 / 85%), oklch(0.3 0.16 258 / 70%));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+}
+
+.stat-card__value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.stat-card__label {
+  margin-top: var(--space-2);
+  font-size: 0.8rem;
+  color: var(--stone);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.featured-race { margin-bottom: var(--space-2); }
+
+.featured-race__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.featured-race__meta {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--stone);
+}
