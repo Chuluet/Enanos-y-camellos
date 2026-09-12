@@ -103,7 +103,7 @@ public class SecurityConfig {
 
         converter.setJwtGrantedAuthoritiesConverter(
                 SecurityConfig::rolesDelRealm);
-
+        converter.setPrincipalClaimName("preferred_username");
         return converter;
     }
 

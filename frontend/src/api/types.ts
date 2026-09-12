@@ -171,6 +171,10 @@ export interface UpdateTeamInput {
 /** Mirrors TeamPatchRequest.java (PATCH body) — every field optional, only sent fields change. */
 export type PatchTeamInput = Partial<UpdateTeamInput>;
 
+/* ============================== Registrations ============================== */
+
+export type RegistrationStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+
 /* ============================== Results ============================== */
 
 export type ResultStatus = "FINISHED" | "DISQUALIFIED" | "DID_NOT_FINISH" | "DID_NOT_START";
@@ -182,6 +186,27 @@ export interface RaceSummaryResponse {
   raceType: RaceType;
   status: RaceStatus;
   scheduledDateTime: string;
+}
+
+/** Mirrors RaceRegistrationResponse.java */
+export interface Registration {
+  id: string;
+  race: RaceSummaryResponse;
+  competitor: CompetitorSummaryResponse | null;
+  team: TeamSummaryResponse | null;
+  registrationDate: string;
+  status: RegistrationStatus;
+  startingPosition: number | null;
+  validationNotes: string | null;
+  registeredBy: string;
+}
+
+/** Mirrors RaceRegistrationRequest.java */
+export interface CreateRegistrationInput {
+  competitorId?: string;
+  teamId?: string;
+  startingPosition?: number;
+  registeredBy: string;
 }
 
 /** Mirrors RaceResultResponse.java. Exactly one of competitor/team is present. */
@@ -199,4 +224,55 @@ export interface RaceResultResponse {
   notes: string | null;
   recordedBy: string;
   recordedAt: string;
+}
+
+/** Mirrors RaceResultRequest.java */
+export interface CreateResultInput {
+  registrationId: string;
+  startPosition?: number;
+  finalPosition?: number;
+  completionTime?: number;
+  penaltyTime?: number;
+  status: ResultStatus;
+  notes?: string;
+  recordedBy: string;
+}
+
+/** Mirrors CompetitorStandingResponse.java */
+export interface CompetitorStanding {
+  competitorId: string;
+  nickname: string;
+  competitorType: CompetitorType;
+  totalPoints: number;
+  victories: number;
+  defeats: number;
+  completedRaces: number;
+}
+
+/** Mirrors TeamStandingResponse.java */
+export interface TeamStanding {
+  teamId: string;
+  name: string;
+  totalPoints: number;
+  victories: number;
+  defeats: number;
+}
+
+/** Mirrors StandingsResponse.java */
+export interface Standings {
+  competitors: CompetitorStanding[];
+  teams: TeamStanding[];
+}
+
+/** Mirrors AuditLogResponse.java */
+export interface AuditLogEntry {
+  id: string;
+  username: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  timestamp: string;
+  description: string | null;
+  oldValue: string | null;
+  newValue: string | null;
 }

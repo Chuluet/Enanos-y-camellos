@@ -10,6 +10,10 @@ import { CompetitorDetailPage } from "./pages/competitors/CompetitorDetailPage";
 import { TeamListPage } from "./pages/teams/TeamListPage";
 import { TeamCreatePage } from "./pages/teams/TeamCreatePage";
 import { TeamDetailPage } from "./pages/teams/TeamDetailPage";
+import { RaceDetailPage } from "./pages/races/RaceDetailPage";
+import { RaceFormPage } from "./pages/races/RaceFormPage";
+import { StandingsPage } from "./pages/standings/StandingsPage";
+import { AuditLogPage } from "./pages/auditlog/AuditLogPage";
 
 export const router = createBrowserRouter([
     {
@@ -37,6 +41,22 @@ export const router = createBrowserRouter([
                 element: (
                     <ProtectedRoute>
                         <RaceListPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "races/:id",
+                element: (
+                    <ProtectedRoute>
+                    <RaceDetailPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "races/new",
+                element: (
+                    <ProtectedRoute requiredRoles={["ADMINISTRATOR", "RACE_ORGANIZER"]}>
+                    <RaceFormPage />
                     </ProtectedRoute>
                 ),
             },
@@ -85,6 +105,22 @@ export const router = createBrowserRouter([
                 element: (
                     <ProtectedRoute>
                         <TeamDetailPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "standings",
+                element: (
+                    <ProtectedRoute>
+                        <StandingsPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "audit-log",
+                element: (
+                    <ProtectedRoute requiredRoles={["ADMINISTRATOR"]}>
+                        <AuditLogPage />
                     </ProtectedRoute>
                 ),
             },

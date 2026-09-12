@@ -3,22 +3,31 @@ import { API_BASE_URL } from "../auth/oidcConfig";
 
 /** Mirrors GlobalExceptionHandler.ErrorResponse on the backend. */
 export interface ApiErrorResponse {
-  timestamp: string;
   status: number;
   error: string;
   message: string;
   path: string;
-  validationErrors?: Record<string, string>;
+  timestamp: string;
+  /** Only present on 400 validation errors: field name -> specific message. */
+  validationErrors?: Record<string, string> | null;
 }
 
 export class ApiError extends Error {
   status: number;
   body: ApiErrorResponse | null;
+  /** Convenience getter: field -> message, or {} if this wasn't a validation error. */
+  validationErrors: Record<string, string>;
 
   constructor(status: number, body: ApiErrorResponse | null) {
-    super(body?.message ?? `Request failed with status ${status}`);
+    const validationErrors = body?.validationErrors ?? {};
+    const detail = Object.entries(validationErrors)
+      .map(([field, msg]) => `${field}: ${msg}`)
+      .join("; ");
+
+    super(detail ? `${body?.message} (${detail})` : body?.message ?? `Request failed with status ${status}`);
     this.status = status;
     this.body = body;
+    this.validationErrors = validationErrors;
   }
 }
 
