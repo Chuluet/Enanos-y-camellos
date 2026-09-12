@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { standingsApi } from "../../api/standings";
 import type { Standings, CompetitorType } from "../../api/types";
 import { ApiError } from "../../api/apiClient";
-import heroImage from "../../assets/hero.png";
+import heroImage from "../../assets/boys.jpg";
 import { COMPETITOR_AVATAR } from "../../assets/competitorAvatars";
 
 const TYPE_TONE: Record<CompetitorType, string> = {

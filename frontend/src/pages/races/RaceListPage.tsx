@@ -4,7 +4,7 @@ import { racesApi } from "../../api/races";
 import type { Race, RaceStatus, RaceType } from "../../api/types";
 import { ApiError } from "../../api/apiClient";
 import { useRoles } from "../../auth/useRoles";
-import dwarfCamelHero from "../../assets/dwarf-camel-hero.png";
+import dwarfCamelHero from "../../assets/japan.jpg";
 
 const STATUS_STYLE: Record<RaceStatus, { label: string; tone: string }> = {
   DRAFT: { label: "Draft", tone: "stone" },
@@ -56,7 +56,7 @@ export function RaceListPage() {
         <Link to="/" className="page-breadcrumb">
           ← Main menu
         </Link>
-        <h1 className="page-title-banner">Races</h1>
+        <h1 className="page-title-banner page-title-banner--races">Races</h1>
 
         <div className="page-session-bar">
           <span>Role: {isAdministrator ? "Admin" : "Viewer"}</span>

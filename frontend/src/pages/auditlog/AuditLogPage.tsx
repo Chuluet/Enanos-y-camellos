@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { auditLogApi } from "../../api/auditLog";
 import type { AuditLogEntry } from "../../api/types";
 import { ApiError } from "../../api/apiClient";
+import otherBg from "../../assets/admin.jpg";
 
 const ACTION_TONE: Record<string, string> = {
   CREATE: "oasis",
@@ -15,6 +16,8 @@ const ACTION_TONE: Record<string, string> = {
 };
 
 export function AuditLogPage() {
+  const bg = <div className="page-bg-fixed" style={{ backgroundImage: `url(${otherBg})` }} />;
+
   const [entries, setEntries] = useState<AuditLogEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState("");
@@ -26,7 +29,7 @@ export function AuditLogPage() {
     setError(null);
 
     auditLogApi
-      .getAll({ username: username || undefined, entityType: entityType || undefined })
+      .getAll({ entityType: entityType || undefined })
       .then((data) => {
         if (!cancelled) setEntries(data);
       })
@@ -38,68 +41,74 @@ export function AuditLogPage() {
     return () => {
       cancelled = true;
     };
-  }, [username, entityType]);
+  }, [entityType]);
+
+  const filteredEntries =
+    entries?.filter((entry) => entry.username.toLowerCase().includes(username.toLowerCase())) ?? null;
 
   return (
-    <div>
-      <Link to="/" className="page-breadcrumb">
-        ← Main menu
-      </Link>
-      <h1 className="page-title-banner">Audit log</h1>
+    <>
+      {bg}
+      <div>
+        <Link to="/" className="page-breadcrumb">
+          ← Main menu
+        </Link>
+        <h1 className="page-title-banner page-title-banner--auditlog">Audit log</h1>
 
-      <div className="filter-bar">
-        <select value={entityType} onChange={(e) => setEntityType(e.target.value)}>
-          <option value="">All entity types</option>
-          <option value="Race">Race</option>
-          <option value="Registration">Registration</option>
-          <option value="Result">Result</option>
-        </select>
-        <input
-          placeholder="Filter by username..."
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-      </div>
+        <div className="filter-bar">
+          <select value={entityType} onChange={(e) => setEntityType(e.target.value)}>
+            <option value="">All entity types</option>
+            <option value="Race">Race</option>
+            <option value="Registration">Registration</option>
+            <option value="Result">Result</option>
+          </select>
+          <input
+            placeholder="Filter by username..."
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
 
-      {error ? (
-        <div className="state-box state-box--error">
-          <p>{error}</p>
-        </div>
-      ) : entries === null ? (
-        <div className="state-box">
-          <div className="spinner" />
-          <p>Loading audit log...</p>
-        </div>
-      ) : entries.length === 0 ? (
-        <div className="state-box">
-          <p>No entries match these filters.</p>
-        </div>
-      ) : (
-        <div className="sheet">
-          {entries.map((entry, index) => (
-            <div key={entry.id} className="sheet-row rise" style={{ animationDelay: `${index * 40}ms` }}>
-              <span className={`sheet-row__stripe stripe-${ACTION_TONE[entry.action] ?? "stone"}`} />
-              <div className="sheet-row__body">
-                <div className="sheet-row__title">
-                  {entry.entityType} — {entry.description ?? entry.action}
+        {error ? (
+          <div className="state-box state-box--error">
+            <p>{error}</p>
+          </div>
+        ) : filteredEntries === null ? (
+          <div className="state-box">
+            <div className="spinner" />
+            <p>Loading audit log...</p>
+          </div>
+        ) : filteredEntries.length === 0 ? (
+          <div className="state-box">
+            <p>No entries match these filters.</p>
+          </div>
+        ) : (
+          <div className="sheet">
+            {filteredEntries.map((entry, index) => (
+              <div key={entry.id} className="sheet-row rise" style={{ animationDelay: `${index * 40}ms` }}>
+                <span className={`sheet-row__stripe stripe-${ACTION_TONE[entry.action] ?? "stone"}`} />
+                <div className="sheet-row__body">
+                  <div className="sheet-row__title">
+                    {entry.entityType} — {entry.description ?? entry.action}
+                  </div>
+                  <div className="sheet-row__meta">
+                    <span>{entry.username}</span>
+                    <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                    {entry.oldValue && entry.newValue && (
+                      <span>
+                        {entry.oldValue} → {entry.newValue}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="sheet-row__meta">
-                  <span>{entry.username}</span>
-                  <span>{new Date(entry.timestamp).toLocaleString()}</span>
-                  {entry.oldValue && entry.newValue && (
-                    <span>
-                      {entry.oldValue} → {entry.newValue}
-                    </span>
-                  )}
-                </div>
+                <span className={`sheet-row__status status-${ACTION_TONE[entry.action] ?? "stone"}`}>
+                  {entry.action}
+                </span>
               </div>
-              <span className={`sheet-row__status status-${ACTION_TONE[entry.action] ?? "stone"}`}>
-                {entry.action}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }

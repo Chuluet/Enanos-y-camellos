@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { racesApi } from "../../api/races";
 import type { Race, RaceStatus } from "../../api/types";
@@ -6,6 +7,7 @@ import { ApiError } from "../../api/apiClient";
 import { useRoles } from "../../auth/useRoles";
 import { RaceRegistrations } from "./RaceRegistrations";
 import { RaceResults } from "./RaceResults";
+import dwarfCamelHero from "../../assets/japan.jpg";
 
 const STATUS_TONE: Record<RaceStatus, string> = {
   DRAFT: "stone",
@@ -55,12 +57,14 @@ export function RaceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canWrite } = useRoles();
+  const bg = <div className="page-bg-fixed" style={{ backgroundImage: `url(${dwarfCamelHero})` }} />;
 
   const [race, setRace] = useState<Race | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<FormState | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [statusDraft, setStatusDraft] = useState<RaceStatus | "">("");
   const [justApplied, setJustApplied] = useState(false);
@@ -85,23 +89,29 @@ export function RaceDetailPage() {
 
   useEffect(load, [id]);
 
-  if (error) {
+    if (error) {
     return (
-      <div className="state-box state-box--error">
-        <p>{error}</p>
-        <Link to="/races" className="btn btn-secondary">
-          Back to races
-        </Link>
-      </div>
+      <>
+        {bg}
+        <div className="state-box state-box--error">
+          <p>{error}</p>
+          <Link to="/races" className="btn btn-secondary">
+            Back to races
+          </Link>
+        </div>
+      </>
     );
   }
 
-  if (!race || !form) {
+    if (!race || !form) {
     return (
-      <div className="state-box">
-        <div className="spinner" />
-        <p>Loading race...</p>
-      </div>
+      <>
+        {bg}
+        <div className="state-box">
+          <div className="spinner" />
+          <p>Loading race...</p>
+        </div>
+      </>
     );
   }
 
@@ -111,6 +121,7 @@ export function RaceDetailPage() {
     if (!id || !form) return;
     setSaving(true);
     setFormError(null);
+    setFieldErrors({});
     try {
       const updated = await racesApi.update(id, {
         name: form.name,
@@ -126,7 +137,19 @@ export function RaceDetailPage() {
       setForm(toFormState(updated));
       setEditing(false);
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : "Couldn't save changes.");
+      if (err instanceof ApiError) {
+        if (err.body?.validationErrors) {
+          setFieldErrors(err.body.validationErrors);
+        } else if (err.status === 409) {
+          setFormError(err.body?.message ?? "This change conflicts with the race's current state.");
+        } else if (err.status === 403) {
+          setFormError("You do not have permission to edit this race.");
+        } else {
+          setFormError(err.body?.message ?? "Couldn't save changes.");
+        }
+      } else {
+        setFormError("Couldn't save changes.");
+      }
     } finally {
       setSaving(false);
     }
@@ -164,9 +187,11 @@ export function RaceDetailPage() {
 
   const canCancel = race.status !== "COMPLETED" && race.status !== "CANCELLED";
 
-  return (
-    <div>
-      <Link to="/races" className="page-breadcrumb">
+      return (
+    <>
+      {bg}
+      <div>
+        <Link to="/races" className="page-breadcrumb">
         ← Back to races
       </Link>
 
@@ -193,75 +218,111 @@ export function RaceDetailPage() {
       )}
 
       {editing ? (
-        <div className="detail-card">
-          <div className="detail-grid">
-            <div className="form-field">
-              <label>Name</label>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            </div>
-            <div className="form-field">
-              <label>Description</label>
-              <input
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
-            </div>
-            <div className="form-field">
-              <label>Scheduled date/time</label>
-              <input
-                type="datetime-local"
-                value={form.scheduledDateTime}
-                onChange={(e) => setForm({ ...form, scheduledDateTime: e.target.value })}
-              />
-            </div>
-            <div className="form-field">
-              <label>Registration deadline</label>
-              <input
-                type="datetime-local"
-                value={form.registrationDeadline}
-                onChange={(e) => setForm({ ...form, registrationDeadline: e.target.value })}
-              />
-            </div>
-            <div className="form-field">
-              <label>Start location</label>
-              <input
-                value={form.startLocation}
-                onChange={(e) => setForm({ ...form, startLocation: e.target.value })}
-              />
-            </div>
-            <div className="form-field">
-              <label>Finish location</label>
-              <input
-                value={form.finishLocation}
-                onChange={(e) => setForm({ ...form, finishLocation: e.target.value })}
-              />
-            </div>
-            <div className="form-field">
-              <label>Distance (meters)</label>
-              <input
-                type="number"
-                value={form.distanceMeters}
-                onChange={(e) => setForm({ ...form, distanceMeters: e.target.value })}
-              />
-            </div>
-            <div className="form-field">
-              <label>Max participants</label>
-              <input
-                type="number"
-                value={form.maxParticipants}
-                onChange={(e) => setForm({ ...form, maxParticipants: e.target.value })}
-              />
+        <form
+          onSubmit={(e: FormEvent) => {
+            e.preventDefault();
+            handleSave();
+          }}
+          className="detail-card form-card"
+        >
+          <div className="form-section">
+            <h3>Race details</h3>
+            <div className="form-grid">
+              <div className="form-field">
+                <label>Name</label>
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                {fieldErrors.name && <span className="field-error">{fieldErrors.name}</span>}
+              </div>
+              <div className="form-field">
+                <label>Description</label>
+                <input
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                />
+                {fieldErrors.description && <span className="field-error">{fieldErrors.description}</span>}
+              </div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-              Save
+
+          <div className="form-section">
+            <h3>Route</h3>
+            <div className="form-grid">
+              <div className="form-field">
+                <label>Start location</label>
+                <input
+                  value={form.startLocation}
+                  onChange={(e) => setForm({ ...form, startLocation: e.target.value })}
+                />
+                {fieldErrors.startLocation && <span className="field-error">{fieldErrors.startLocation}</span>}
+              </div>
+              <div className="form-field">
+                <label>Finish location</label>
+                <input
+                  value={form.finishLocation}
+                  onChange={(e) => setForm({ ...form, finishLocation: e.target.value })}
+                />
+                {fieldErrors.finishLocation && <span className="field-error">{fieldErrors.finishLocation}</span>}
+              </div>
+              <div className="form-field">
+                <label>Distance (meters)</label>
+                <input
+                  type="number"
+                  value={form.distanceMeters}
+                  onChange={(e) => setForm({ ...form, distanceMeters: e.target.value })}
+                />
+                {fieldErrors.distanceMeters && <span className="field-error">{fieldErrors.distanceMeters}</span>}
+              </div>
+              <div className="form-field">
+                <label>Max participants</label>
+                <input
+                  type="number"
+                  value={form.maxParticipants}
+                  onChange={(e) => setForm({ ...form, maxParticipants: e.target.value })}
+                />
+                {fieldErrors.maxParticipants && <span className="field-error">{fieldErrors.maxParticipants}</span>}
+              </div>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>Schedule</h3>
+            <div className="form-grid">
+              <div className="form-field">
+                <label>Scheduled date/time</label>
+                <input
+                  type="datetime-local"
+                  value={form.scheduledDateTime}
+                  onChange={(e) => setForm({ ...form, scheduledDateTime: e.target.value })}
+                />
+                {fieldErrors.scheduledDateTime && (
+                  <span className="field-error">{fieldErrors.scheduledDateTime}</span>
+                )}
+              </div>
+              <div className="form-field">
+                <label>Registration deadline</label>
+                <input
+                  type="datetime-local"
+                  value={form.registrationDeadline}
+                  onChange={(e) => setForm({ ...form, registrationDeadline: e.target.value })}
+                />
+                {fieldErrors.registrationDeadline && (
+                  <span className="field-error">{fieldErrors.registrationDeadline}</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? "Saving..." : "Save"}
             </button>
             <button
+              type="button"
               className="btn btn-secondary"
               onClick={() => {
                 setForm(toFormState(race));
                 setFormError(null);
+                setFieldErrors({});
                 setEditing(false);
               }}
               disabled={saving}
@@ -269,7 +330,7 @@ export function RaceDetailPage() {
               Cancel
             </button>
           </div>
-        </div>
+        </form>
       ) : (
         <div className="detail-card competitor-hero">
           <div className="competitor-hero__body">
@@ -336,14 +397,16 @@ export function RaceDetailPage() {
           )}
         </div>
       )}
-            {!editing && (
+
+      {!editing && (
         <div style={{ marginTop: 32 }}>
           <RaceRegistrations race={race} />
           <div style={{ marginTop: 32 }}>
             <RaceResults race={race} />
           </div>
         </div>
-      )}
-    </div>
+            )}
+      </div>
+    </>
   );
 }
