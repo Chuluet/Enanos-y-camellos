@@ -15,7 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,6 +34,7 @@ import java.util.UUID;
 public class CompetitorService {
 
     private final ICompetitorRepository competitorRepository;
+    private final AuditLogService auditLogService;
 
     // ============================== Read ===============================
 
@@ -95,6 +96,9 @@ public class CompetitorService {
         Competitor competitor = CompetitorMapper.toEntity(request);
         Competitor saved = competitorRepository.save(competitor);
 
+        auditLogService.log("CREATE", "Competitor", saved.getId().toString(),
+                "Competitor '%s' created".formatted(saved.getNickname()));
+
         log.info("Competitor created id={} nickname={}", saved.getId(), saved.getNickname());
         return CompetitorMapper.toResponse(saved);
     }
@@ -128,6 +132,9 @@ public class CompetitorService {
         competitor.setOrigin(request.origin());
 
         Competitor updated = competitorRepository.save(competitor);
+
+        auditLogService.log("UPDATE", "Competitor", id.toString(), "Competitor data updated");
+
         log.info("Competitor updated id={}", id);
         return CompetitorMapper.toResponse(updated);
     }
@@ -156,8 +163,14 @@ public class CompetitorService {
                             .formatted(competitor.getNickname(), request.status()));
         }
 
+        CompetitorStatus previousStatus = competitor.getStatus();
         competitor.setStatus(request.status());
         Competitor updated = competitorRepository.save(competitor);
+
+        auditLogService.log("STATUS_CHANGE", "Competitor", id.toString(),
+                "Competitor status changed from %s to %s".formatted(previousStatus, request.status()),
+                previousStatus, request.status());
+
         log.info("Competitor id={} status changed to {}", id, request.status());
         return CompetitorMapper.toResponse(updated);
     }
@@ -180,11 +193,13 @@ public class CompetitorService {
         if (hasOfficialResults(competitor)) {
             competitor.setStatus(CompetitorStatus.RETIRED);
             competitorRepository.save(competitor);
+            auditLogService.log("RETIRE", "Competitor", id.toString(), "Competitor retired (has official results)");
             log.info("Competitor retired id={} (has official results)", id);
             return;
         }
 
         competitorRepository.delete(competitor);
+        auditLogService.log("DELETE", "Competitor", id.toString(), "Competitor permanently deleted (no official results)");
         log.info("Competitor permanently deleted id={} (no official results)", id);
     }
 
@@ -239,7 +254,7 @@ public class CompetitorService {
         }
 
         Competitor updated = competitorRepository.save(competitor);
-        log.info("Competitor patched id={}", id);
+        auditLogService.log("UPDATE", "Competitor", id.toString(), "Competitor data partially updated");
         return CompetitorMapper.toResponse(updated);
     }
 }

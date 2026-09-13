@@ -61,6 +61,8 @@ export function AuditLogPage() {
             <option value="Race">Race</option>
             <option value="Registration">Registration</option>
             <option value="Result">Result</option>
+            <option value="Competitor">Competitor</option>
+            <option value="Team">Team</option>
           </select>
           <input
             placeholder="Filter by username..."
