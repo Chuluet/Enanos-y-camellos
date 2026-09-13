@@ -23,7 +23,8 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",  // Vite dev server
-                "http://localhost:8081"   // frontend container, once dockerized
+                "http://localhost:8081",
+                "http://localhost:8082"  // frontend container, once dockerized
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
