@@ -92,6 +92,8 @@ public class AuditLogService {
 
         if (entityType != null && entityId != null) {
             entries = auditLogRepository.findAllByEntityTypeAndEntityIdOrderByTimestampDesc(entityType, entityId);
+        } else if (entityType != null) {
+            entries = auditLogRepository.findAllByEntityTypeOrderByTimestampDesc(entityType);
         } else if (username != null) {
             entries = auditLogRepository.findAllByUsernameOrderByTimestampDesc(username);
         } else if (from != null && to != null) {

@@ -39,6 +39,7 @@ public class TeamService {
 
     private final ITeamRepository teamRepository;
     private final ICompetitorRepository competitorRepository;
+    private final com.example.enanosycamellos.auditlog.service.AuditLogService auditLogService;
 
     // ============================== Read ===============================
 
@@ -98,6 +99,9 @@ public class TeamService {
 
         assignMembers(saved, request.memberIdsOrEmpty());
 
+        auditLogService.log("CREATE", "Team", saved.getId().toString(),
+                "Team '%s' created".formatted(saved.getName()));
+
         log.info("Team created id={} members={}", saved.getId(), request.memberIdsOrEmpty().size());
         return TeamMapper.toResponse(saved);
     }
@@ -132,6 +136,9 @@ public class TeamService {
         team.setStatus(request.status());
 
         Team updated = teamRepository.save(team);
+
+        auditLogService.log("UPDATE", "Team", id.toString(), "Team data updated");
+
         log.info("Team updated (PUT) id={}", id);
         return TeamMapper.toResponse(updated);
     }
@@ -177,6 +184,9 @@ public class TeamService {
         }
 
         Team updated = teamRepository.save(team);
+
+        auditLogService.log("UPDATE", "Team", id.toString(), "Team data partially updated");
+
         log.info("Team patched id={}", id);
         return TeamMapper.toResponse(updated);
     }
@@ -214,6 +224,9 @@ public class TeamService {
         team.addMember(competitor);
         competitorRepository.save(competitor);
 
+        auditLogService.log("ADD_MEMBER", "Team", teamId.toString(),
+                "Competitor '%s' added to the team".formatted(competitor.getNickname()));
+
         log.info("Competitor id={} added to team id={}", competitorId, teamId);
         return TeamMapper.toResponse(team);
     }
@@ -236,6 +249,9 @@ public class TeamService {
         team.removeMember(competitor);
         competitorRepository.save(competitor);
 
+        auditLogService.log("REMOVE_MEMBER", "Team", teamId.toString(),
+                "Competitor '%s' removed from the team".formatted(competitor.getNickname()));
+
         log.info("Competitor id={} removed from team id={}", competitorId, teamId);
         return TeamMapper.toResponse(team);
     }
@@ -255,6 +271,7 @@ public class TeamService {
         if (hasOfficialRaceHistory(team)) {
             team.setStatus(TeamStatus.INACTIVE);
             teamRepository.save(team);
+            auditLogService.log("DEACTIVATE", "Team", id.toString(), "Team deactivated (has official race history)");
             log.info("Team deactivated id={} (has official race history)", id);
             return;
         }
@@ -264,6 +281,7 @@ public class TeamService {
             competitorRepository.save(member);
         }
         teamRepository.delete(team);
+        auditLogService.log("DELETE", "Team", id.toString(), "Team permanently deleted (no official race history)");
         log.info("Team permanently deleted id={} (no official race history)", id);
     }
 
