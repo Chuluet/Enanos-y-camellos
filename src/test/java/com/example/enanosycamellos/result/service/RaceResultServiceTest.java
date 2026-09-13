@@ -20,6 +20,7 @@ import com.example.enanosycamellos.result.dto.RaceResultUpdateRequest;
 import com.example.enanosycamellos.result.entity.RaceResult;
 import com.example.enanosycamellos.result.entity.ResultStatus;
 import com.example.enanosycamellos.result.repository.IRaceResultRepository;
+import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import com.example.enanosycamellos.team.entity.Team;
 import com.example.enanosycamellos.team.entity.TeamStatus;
 import com.example.enanosycamellos.team.repository.ITeamRepository;
@@ -51,6 +52,7 @@ class RaceResultServiceTest {
     @Mock private IRaceRepository raceRepository;
     @Mock private ICompetitorRepository competitorRepository;
     @Mock private ITeamRepository teamRepository;
+    @Mock private AuditLogService auditLogService;
 
     @InjectMocks
     private RaceResultService resultService;
@@ -282,7 +284,11 @@ class RaceResultServiceTest {
         when(resultRepository.existsByRegistration_Id(registrationId)).thenReturn(false);
         when(resultRepository.existsByRegistration_Race_IdAndFinalPositionAndStatusAndIdNot(
                 any(), any(), any(), any())).thenReturn(false);
-        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> {
+            RaceResult r = inv.getArgument(0);
+            if (r.getId() == null) r.setId(UUID.randomUUID());
+            return r;
+        });
 
         resultService.record(request);
 
@@ -301,7 +307,11 @@ class RaceResultServiceTest {
 
         when(registrationRepository.findById(registrationId)).thenReturn(Optional.of(registration));
         when(resultRepository.existsByRegistration_Id(registrationId)).thenReturn(false);
-        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> {
+            RaceResult r = inv.getArgument(0);
+            if (r.getId() == null) r.setId(UUID.randomUUID());
+            return r;
+        });
 
         resultService.record(request);
 
@@ -326,7 +336,11 @@ class RaceResultServiceTest {
         when(resultRepository.existsByRegistration_Id(registrationId)).thenReturn(false);
         when(resultRepository.existsByRegistration_Race_IdAndFinalPositionAndStatusAndIdNot(
                 any(), any(), any(), any())).thenReturn(false);
-        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> {
+            RaceResult r = inv.getArgument(0);
+            if (r.getId() == null) r.setId(UUID.randomUUID());
+            return r;
+        });
 
         resultService.record(request);
 
@@ -350,7 +364,11 @@ class RaceResultServiceTest {
         when(resultRepository.existsByRegistration_Id(registrationId)).thenReturn(false);
 
         ArgumentCaptor<RaceResult> captor = ArgumentCaptor.forClass(RaceResult.class);
-        when(resultRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(resultRepository.save(captor.capture())).thenAnswer(inv -> {
+            RaceResult r = inv.getArgument(0);
+            r.setId(UUID.randomUUID());
+            return r;
+        });
 
         resultService.record(request);
 
@@ -403,7 +421,11 @@ class RaceResultServiceTest {
         when(resultRepository.findById(id)).thenReturn(Optional.of(existing));
         when(resultRepository.existsByRegistration_Race_IdAndFinalPositionAndStatusAndIdNot(
                 any(), any(), any(), any())).thenReturn(false);
-        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> {
+            RaceResult r = inv.getArgument(0);
+            if (r.getId() == null) r.setId(UUID.randomUUID());
+            return r;
+        });
 
         resultService.update(id, request);
 
@@ -427,7 +449,11 @@ class RaceResultServiceTest {
         when(resultRepository.findById(id)).thenReturn(Optional.of(existing));
         when(resultRepository.existsByRegistration_Race_IdAndFinalPositionAndStatusAndIdNot(
                 eq(race.getId()), eq(1), eq(ResultStatus.FINISHED), eq(id))).thenReturn(false);
-        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(resultRepository.save(any(RaceResult.class))).thenAnswer(inv -> {
+            RaceResult r = inv.getArgument(0);
+            if (r.getId() == null) r.setId(UUID.randomUUID());
+            return r;
+        });
 
         RaceResultResponse response = resultService.update(id, request);
 
