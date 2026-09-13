@@ -224,6 +224,28 @@ class TeamServiceTest {
 
             assertThrows(ConflictException.class, () -> teamService.create(request));
         }
+
+        @Test
+        @DisplayName("throws 409 if an initial member already belongs to another team")
+        void memberAlreadyInAnotherTeam_throws409() {
+            UUID competitorId = UUID.randomUUID();
+            TeamRequest request = new TeamRequest(
+                    "The Five Exceptions", null, "Mr. Abandonado", 5, TeamStatus.ACTIVE,
+                    List.of(competitorId));
+
+            Team otherTeam = buildTeam("Other Team");
+            Competitor competitor = buildCompetitor(competitorId, CompetitorStatus.ACTIVE, otherTeam);
+
+            when(teamRepository.existsByNameIgnoreCase("The Five Exceptions")).thenReturn(false);
+            when(teamRepository.save(any(Team.class))).thenAnswer(invocation -> {
+                Team t = invocation.getArgument(0);
+                t.setId(UUID.randomUUID());
+                return t;
+            });
+            when(competitorRepository.findById(competitorId)).thenReturn(Optional.of(competitor));
+
+            assertThrows(ConflictException.class, () -> teamService.create(request));
+        }
     }
 
     // ============================== Update (PUT, full replace) =========================
