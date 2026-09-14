@@ -8,12 +8,12 @@ import { ApiError } from "../../api/apiClient";
 import dwarfBg from "../../assets/dwarf.jpg";
 
 const RACE_STATUS_LABEL: Record<Race["status"], string> = {
-    DRAFT: "Borrador",
-    OPEN_FOR_REGISTRATION: "Inscripciones abiertas",
-    CLOSED_FOR_REGISTRATION: "Inscripciones cerradas",
-    IN_PROGRESS: "En curso",
-    COMPLETED: "Finalizada",
-    CANCELLED: "Cancelada",
+    DRAFT: "Draft",
+    OPEN_FOR_REGISTRATION: "Registration open",
+    CLOSED_FOR_REGISTRATION: "Registration closed",
+    IN_PROGRESS: "In progress",
+    COMPLETED: "Completed",
+    CANCELLED: "Cancelled",
 };
 
 const RACE_STATUS_TONE: Record<Race["status"], string> = {
@@ -96,7 +96,7 @@ export function DashboardPage() {
                 });
             } catch (err) {
                 if (cancelled) return;
-                setError(err instanceof ApiError ? err.message : "Algo salió mal cargando el tablero.");
+                setError(err instanceof ApiError ? err.message : "Something went wrong loading the dashboard.");
             }
         }
 
@@ -110,9 +110,9 @@ export function DashboardPage() {
         <>
             <div className="page-bg-fixed" style={{ backgroundImage: `url(${dwarfBg})` }} />
             <div>
-                <h1 className="page-title-banner">Tablero</h1>
+                <h1 className="page-title-banner">Dashboard</h1>
                 <p className="app-content__subtitle">
-                    Próxima carrera, competidores activos y últimos resultados
+                    Next race, active competitors and latest results
                 </p>
 
                 {error ? (
@@ -122,7 +122,7 @@ export function DashboardPage() {
                 ) : data === null ? (
                     <div className="state-box">
                         <div className="spinner" />
-                        <p>Cargando tablero...</p>
+                        <p>Loading dashboard...</p>
                     </div>
                 ) : (
                     <>
@@ -134,7 +134,7 @@ export function DashboardPage() {
                                         <p className="featured-race__meta">
                                             {new Date(data.featuredRace.scheduledDateTime).toLocaleString()} ·{" "}
                                             {data.featuredRace.distanceMeters} m ·{" "}
-                                            {data.featuredRace.raceType === "MIXED" ? "Mixta" : data.featuredRace.raceType}
+                                            {data.featuredRace.raceType === "MIXED" ? "Mixed" : data.featuredRace.raceType}
                                         </p>
                                     </div>
                                     <span className={`sheet-row__status status-${RACE_STATUS_TONE[data.featuredRace.status]}`}>
@@ -144,45 +144,45 @@ export function DashboardPage() {
                             </div>
                         ) : (
                             <div className="state-box">
-                                <p>No hay carreras en curso ni próximas por ahora.</p>
+                                <p>There are no ongoing or upcoming races right now.</p>
                             </div>
                         )}
 
                         <div className="dashboard-stats">
                             <div className="stat-card">
                                 <div className="stat-card__value">{data.activeCompetitorsCount}</div>
-                                <div className="stat-card__label">Competidores activos</div>
+                                <div className="stat-card__label">Active competitors</div>
                             </div>
                             <div className="stat-card">
                                 <div className="stat-card__value">{data.upcomingCount}</div>
-                                <div className="stat-card__label">Carreras próximas</div>
+                                <div className="stat-card__label">Upcoming races</div>
                             </div>
                             <div className="stat-card">
                                 <div className="stat-card__value">{data.teamsCount}</div>
-                                <div className="stat-card__label">Equipos</div>
+                                <div className="stat-card__label">Teams</div>
                             </div>
                         </div>
 
-                        <h2>Resultados recientes</h2>
+                        <h2>Recent results</h2>
                         {data.recentRace === null ? (
                             <div className="state-box">
-                                <p>Todavía no hay carreras finalizadas.</p>
+                                <p>There are no completed races yet.</p>
                             </div>
                         ) : (
                             <div className="detail-card">
                                 <div className="page-session-bar">
                                     <span>{data.recentRace.name}</span>
-                                    <span className="sheet-row__status status-stone">Finalizada</span>
+                                    <span className="sheet-row__status status-stone">Completed</span>
                                 </div>
                                 {data.recentResults.length === 0 ? (
                                     <div className="state-box">
-                                        <p>Esta carrera no tiene resultados registrados.</p>
+                                        <p>This race has no results recorded.</p>
                                     </div>
                                 ) : (
                                     <div className="sheet">
                                         {data.recentResults.map((result) => (
                                             <div key={result.id} className="sheet-row">
-                                                <div className="sheet-row__index">{result.finalPosition}º</div>
+                                                <div className="sheet-row__index">#{result.finalPosition}</div>
                                                 <div className="sheet-row__body">
                                                     <div className="sheet-row__title">{participantLabel(result)}</div>
                                                     {result.notes && (

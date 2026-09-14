@@ -109,7 +109,7 @@ export function CompetitorListPage() {
                                     setStatus(e.target.value as CompetitorStatus | "");
                                 }}
                             >
-                                <option value="">All statuses</option>
+                                <option value="">All (excluding retired)</option>
                                 <option value="ACTIVE">Active</option>
                                 <option value="INJURED">Injured</option>
                                 <option value="SUSPENDED">Suspended</option>

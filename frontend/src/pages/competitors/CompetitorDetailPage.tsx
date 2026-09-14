@@ -148,11 +148,7 @@ export function CompetitorDetailPage() {
 
   async function handleRetire() {
     if (!id || !competitor) return;
-    if (
-        !window.confirm(
-            `Remove ${competitor.name}? If they have no official race results this deletes them permanently; otherwise they'll be retired and their race history kept.`
-        )
-    ) {
+    if (!window.confirm(`Retire ${competitor.name}? Their race history will be kept, but they can't be reactivated afterwards.`)) {
       return;
     }
     setSaving(true);
@@ -161,6 +157,25 @@ export function CompetitorDetailPage() {
       navigate("/competitors");
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Couldn't retire this competitor.");
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!id || !competitor) return;
+    if (!window.confirm(`Permanently delete ${competitor.name}? This cannot be undone.`)) {
+      return;
+    }
+    setSaving(true);
+    try {
+      await competitorsApi.delete(id);
+      navigate("/competitors");
+    } catch (err) {
+      setFormError(
+          err instanceof ApiError
+              ? err.message
+              : "Couldn't delete this competitor. If they have official race results, retire them instead."
+      );
       setSaving(false);
     }
   }
@@ -188,8 +203,18 @@ export function CompetitorDetailPage() {
                     Edit
                   </button>
                   {competitor.status !== "RETIRED" && (
-                      <button className="btn btn-danger" onClick={handleRetire} disabled={saving}>
+                      <button className="btn btn-secondary" onClick={handleRetire} disabled={saving}>
                         Retire
+                      </button>
+                  )}
+                  {competitor.completedRaces === 0 && (
+                      <button
+                          className="btn btn-danger"
+                          onClick={handleDelete}
+                          disabled={saving}
+                          title="Only available for competitors with no official race results"
+                      >
+                        Delete
                       </button>
                   )}
                 </div>

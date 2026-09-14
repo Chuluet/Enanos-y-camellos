@@ -2,6 +2,8 @@
   "realm": "enanosycamellos",
   "enabled": true,
   "sslRequired": "none",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
 
   "accessTokenLifespan": 1800,
   "ssoSessionIdleTimeout": 3600,
@@ -54,6 +56,18 @@
         "roles",
         "email"
       ]
+    },
+    {
+      "clientId": "enanosycamellos-backend",
+      "name": "enanosycamellos (backend, servidor a servidor)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "CAMBIAR_ESTE_SECRETO",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false
     }
   ],
 
