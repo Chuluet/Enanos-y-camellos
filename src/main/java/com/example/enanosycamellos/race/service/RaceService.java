@@ -12,6 +12,9 @@ import com.example.enanosycamellos.race.entity.RaceType;
 import com.example.enanosycamellos.race.mapper.RaceMapper;
 import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import com.example.enanosycamellos.race.repository.IRaceRepository;
+import com.example.enanosycamellos.registration.entity.RegistrationStatus;
+import com.example.enanosycamellos.registration.repository.IRaceRegistrationRepository;
+import com.example.enanosycamellos.result.repository.IRaceResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +34,9 @@ import java.util.UUID;
 public class RaceService {
 
     private final IRaceRepository raceRepository;
-     private final AuditLogService auditLogService;
+    private final AuditLogService auditLogService;
+    private final IRaceRegistrationRepository registrationRepository;
+    private final IRaceResultRepository resultRepository;
 
     private static final Map<RaceStatus, Set<RaceStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(RaceStatus.class);
 
@@ -139,13 +144,19 @@ public class RaceService {
         }
 
         if (newStatus == RaceStatus.IN_PROGRESS) {
-            // TODO(registrations): reject if approved registrations < 2.
-            log.debug("Starting race id={} (participant count not yet validated)", id);
+            long approvedCount = registrationRepository.countByRace_IdAndStatus(id, RegistrationStatus.APPROVED);
+            if (approvedCount < 2) {
+                throw new ConflictException(
+                        "At least two approved registrations are required to start this race (found %d)"
+                                .formatted(approvedCount));
+            }
         }
 
         if (newStatus == RaceStatus.COMPLETED) {
-            // TODO(results): reject if this race has no RaceResult rows yet.
-            log.debug("Completing race id={} (results not yet validated)", id);
+            if (!resultRepository.existsByRegistration_Race_Id(id)) {
+                throw new ConflictException(
+                        "This race cannot be completed without at least one official result recorded");
+            }
         }
 
         race.setStatus(newStatus);
