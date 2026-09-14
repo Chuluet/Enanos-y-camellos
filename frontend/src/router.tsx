@@ -16,6 +16,7 @@ import { StandingsPage } from "./pages/standings/StandingsPage";
 import { AuditLogPage } from "./pages/auditlog/AuditLogPage";
 import {LoginPage} from "./pages/auth/LoginPage.tsx";
 import {RegisterPage} from "./pages/auth/RegistrationPage.tsx";
+import { NotFoundPage } from "./pages/errors/NotFoundPage";
 
 export const router = createBrowserRouter([
     {
@@ -141,6 +142,10 @@ export const router = createBrowserRouter([
                         <RegisterPage />
                     </ProtectedRoute>
                 ),
+            },
+            {
+                path: "*",
+                element: <NotFoundPage />,
             },
         ],
     },

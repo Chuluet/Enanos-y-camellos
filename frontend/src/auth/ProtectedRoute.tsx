@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useAuth } from "react-oidc-context";
 import { useRoles, type Role } from "./useRoles";
+import { AccessDeniedPage } from "../pages/errors/AccessDeniedPage";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -13,15 +14,20 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
   const { hasAnyRole } = useRoles();
 
   if (auth.isLoading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="state-box">
+        <div className="spinner" />
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   if (!auth.isAuthenticated) {
-    return <p>You must log in to view this page.</p>;
+    return <AccessDeniedPage reason="unauthenticated" />;
   }
 
   if (requiredRoles && !hasAnyRole(...requiredRoles)) {
-    return <p>You don't have permission to view this page.</p>;
+    return <AccessDeniedPage reason="insufficient-role" />;
   }
 
   return <>{children}</>;
