@@ -12,6 +12,7 @@ import com.example.enanosycamellos.competitor.entity.Competitor;
 import com.example.enanosycamellos.competitor.entity.CompetitorStatus;
 import com.example.enanosycamellos.competitor.entity.CompetitorType;
 import com.example.enanosycamellos.competitor.repository.ICompetitorRepository;
+import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,9 @@ class CompetitorServiceTest {
 
     @Mock
     private ICompetitorRepository competitorRepository;
+
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private CompetitorService competitorService;
