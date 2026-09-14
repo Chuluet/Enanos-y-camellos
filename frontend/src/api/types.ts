@@ -276,3 +276,13 @@ export interface AuditLogEntry {
   oldValue: string | null;
   newValue: string | null;
 }
+/** Mirrors RaceResultUpdateRequest.java (PUT body) */
+export interface UpdateResultInput {
+  startPosition?: number;
+  finalPosition?: number;
+  completionTime?: number;
+  penaltyTime?: number;
+  status: ResultStatus;
+  notes?: string;
+  recordedBy: string;
+}

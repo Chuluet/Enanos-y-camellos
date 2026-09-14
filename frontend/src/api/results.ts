@@ -1,5 +1,5 @@
 import { apiClient } from "./apiClient";
-import type { RaceResultResponse, CreateResultInput } from "./types";
+import type { RaceResultResponse, CreateResultInput, UpdateResultInput } from "./types";
 
 export const resultsApi = {
   /** GET /api/races/{raceId}/results */
@@ -10,4 +10,7 @@ export const resultsApi = {
 
   record: (raceId: string, data: CreateResultInput) =>
     apiClient.post<RaceResultResponse>(`/api/races/${raceId}/results`, data),
+
+  update: (id: string, data: UpdateResultInput) =>
+    apiClient.put<RaceResultResponse>(`/api/results/${id}`, data),
 };
