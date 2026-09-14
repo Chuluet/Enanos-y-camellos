@@ -27,6 +27,15 @@ import java.util.Map;
  * qué puede hacer quien lo trae. Las URL del emisor y de sus llaves públicas
  * están en application.yml, bajo {@code spring.security.oauth2.resourceserver}.</p>
  *
+ * <p>Excepción a esa regla: {@code /api/auth/register}, {@code /login} y
+ * {@code /refresh} quedan públicas a propósito. Son las únicas rutas de la
+ * API pensadas para alguien que todavía NO tiene un token — si exigieran
+ * uno, nadie podría loguearse nunca. {@code AuthService} es quien de verdad
+ * habla con Keycloak ahí adentro; esta clase solo las deja pasar antes del
+ * filtro de JWT. {@code /api/auth/profile} y {@code /logout}, en cambio,
+ * SÍ requieren token (caen en la regla genérica de abajo), porque ambas
+ * necesitan saber quién es el usuario autenticado.</p>
+ *
  * <p>Los permisos son los mismos para los tres recursos (owners, cows, clowns):</p>
  * <ul>
  *   <li>GET      -> rol {@code user} o {@code admin}</li>
@@ -43,7 +52,10 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/v3/api-docs/**",
             "/actuator/health",
-            "/error"
+            "/error",
+            "/api/auth/register",
+            "/api/auth/login",
+            "/api/auth/refresh"
     };
 
     @Bean
@@ -76,6 +88,13 @@ public class SecurityConfig {
                                 "ADMINISTRATOR"
                         )
 
+                        // Logout: cualquier usuario autenticado puede cerrar
+                        // su propia sesión, sin importar su rol — por eso va
+                        // aparte de la regla de escritura de abajo, que exige
+                        // organizer/admin.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout")
+                        .authenticated()
+
                         // Escritura: solamente administrator.
                         .requestMatchers("/api/**")
                         .hasAnyRole("RACE_ORGANIZER", "ADMINISTRATOR")
@@ -85,8 +104,8 @@ public class SecurityConfig {
 
                 .exceptionHandling(handling -> handling
                         .accessDeniedHandler(restAccessDeniedHandler)
-                        .authenticationEntryPoint(restAuthenticationEntryPoint))   
-                                    
+                        .authenticationEntryPoint(restAuthenticationEntryPoint))
+
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .jwtAuthenticationConverter(

@@ -39,7 +39,21 @@ spring:
 # aprieta "Authorize" en Swagger.
 keycloak:
   public-url: ${KEYCLOAK_PUBLIC_URL:http://localhost:8180}
+  # Dirección de Keycloak tal como la ve el propio backend (no el navegador).
+  # La usa KeycloakWebClientConfig (módulo auth) para pedir tokens en nombre
+  # del usuario (login/refresh/logout) y para hablarle a la Admin REST API
+  # (register) — tráfico servidor-a-servidor, igual razón que jwk-set-uri de
+  # arriba. En dev es la misma URL pública (localhost:8180); en docker,
+  # compose.yml la pisa con la interna (http://keycloak:8080).
+  internal-url: ${KEYCLOAK_INTERNAL_URL:http://localhost:8180}
   realm: enanosycamellos
+  # Client confidencial (con secreto) que representa al backend frente a
+  # Keycloak — distinto del client público de Swagger, que corre en el
+  # navegador y no puede guardar un secreto. Necesita
+  # directAccessGrantsEnabled (para /login) y serviceAccountsEnabled (para
+  # /register) habilitados en el realm.
+  backend-client-id: ${KEYCLOAK_BACKEND_CLIENT_ID:enanosycamellos-backend}
+  backend-client-secret: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
 
 # ================================= Servidor ==================================
 # En local y en Docker no hay variable PORT, así que se usa el 8080 de siempre.

@@ -44,7 +44,8 @@ public class CompetitorController {
     @Operation(
             summary = "List competitors",
             description = "Supports filtering by status and/or competitorType, plus pagination and sorting "
-                    + "(e.g. ?page=0&size=10&sort=name,asc)."
+                    + "(e.g. ?page=0&size=10&sort=name,asc). When status is not provided, retired competitors "
+                    + "are excluded by default."
     )
     @ApiResponse(responseCode = "200", description = "Page obtained")
     public ResponseEntity<Page<CompetitorResponse>> getAllCompetitors(
@@ -134,23 +135,48 @@ public class CompetitorController {
         return ResponseEntity.ok(competitorService.changeStatus(id, request));
     }
 
-    @DeleteMapping("/{id}")
+    @PatchMapping("/{id}/retire")
     @Operation(
-            summary = "Retire or delete a competitor",
-            description = "If the competitor has no official race results, it is physically deleted. "
-                    + "Otherwise it is not removed: status is set to RETIRED, preserving race history."
+            summary = "Retire a competitor (logical delete)",
+            description = "Sets status to RETIRED, preserving race history. Always allowed unless the "
+                    + "competitor is already retired. This is the safe removal action for the UI; it never "
+                    + "deletes a row."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Competitor deleted or retired"),
+            @ApiResponse(responseCode = "204", description = "Competitor retired"),
             @ApiResponse(responseCode = "404", description = "Competitor does not exist",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Competitor has already retired",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public ResponseEntity<Void> deleteCompetitor(
+    public ResponseEntity<Void> retireCompetitor(
             @Parameter(description = "Competitor id") @PathVariable UUID id) {
 
         competitorService.retire(id);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(
+            summary = "Permanently delete a competitor (physical delete)",
+            description = "Removes the row outright. Only allowed when the competitor has no official race "
+                    + "results (completedRaces == 0); otherwise deleting would erase history other records "
+                    + "may still reference. If the competitor has race history, use PATCH /{id}/retire instead."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Competitor permanently deleted"),
+            @ApiResponse(responseCode = "404", description = "Competitor does not exist",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Competitor has official race results and cannot be permanently deleted",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<Void> deleteCompetitor(
+            @Parameter(description = "Competitor id") @PathVariable UUID id) {
+
+        competitorService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{id}")
     @Operation(
             summary = "Partially modify a competitor",
