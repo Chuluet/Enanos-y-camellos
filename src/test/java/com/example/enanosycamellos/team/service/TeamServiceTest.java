@@ -21,7 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,6 +42,9 @@ class TeamServiceTest {
 
     @Mock
     private ICompetitorRepository competitorRepository;
+
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private TeamService teamService;

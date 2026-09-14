@@ -36,4 +36,5 @@ public interface IRaceRegistrationRepository extends JpaRepository<RaceRegistrat
      * to validate "at least two valid participants are required to start".
      */
     long countByRace_IdAndStatus(UUID raceId, RegistrationStatus status);
+    long countByRace_IdAndStatusIn(UUID raceId, Collection<RegistrationStatus> statuses);
 }
