@@ -75,6 +75,19 @@ public interface ICompetitorRepository extends JpaRepository<Competitor, UUID> {
     @EntityGraph(attributePaths = "team")
     Page<Competitor> findAll(Pageable pageable);
 
+    /**
+     * Paginated listing that excludes a given status. Used as the default,
+     * no-filter view so retired competitors don't clutter the roster unless
+     * someone explicitly asks to see them via the {@code status} filter.
+     */
+    @EntityGraph(attributePaths = "team")
+    Page<Competitor> findAllByStatusNot(CompetitorStatus status, Pageable pageable);
+
+    /** Same idea as {@link #findAllByStatusNot}, combined with a type filter. */
+    @EntityGraph(attributePaths = "team")
+    Page<Competitor> findAllByCompetitorTypeAndStatusNot(
+            CompetitorType competitorType, CompetitorStatus status, Pageable pageable);
+
     /** All competitors currently in a given team — used by TeamService/TeamMapper if needed. */
     List<Competitor> findAllByTeamId(UUID teamId);
 }

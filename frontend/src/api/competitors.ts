@@ -31,7 +31,7 @@ function buildQuery(filters: CompetitorFilters): string {
 export const competitorsApi = {
   /** Paginated + filterable list — GET /api/competitors */
   getAll: (filters: CompetitorFilters = {}) =>
-    apiClient.get<Page<CompetitorResponse>>(`/api/competitors${buildQuery(filters)}`),
+      apiClient.get<Page<CompetitorResponse>>(`/api/competitors${buildQuery(filters)}`),
 
   /** Full unpaginated list — GET /api/competitors/all (handy for "assign to team" pickers). */
   getAllList: () => apiClient.get<CompetitorResponse[]>("/api/competitors/all"),
@@ -39,19 +39,22 @@ export const competitorsApi = {
   getById: (id: string) => apiClient.get<CompetitorResponse>(`/api/competitors/${id}`),
 
   create: (data: CreateCompetitorInput) =>
-    apiClient.post<CompetitorResponse>("/api/competitors", data),
+      apiClient.post<CompetitorResponse>("/api/competitors", data),
 
   /** PUT — full replace. Does not touch status or statistics. */
   update: (id: string, data: UpdateCompetitorInput) =>
-    apiClient.put<CompetitorResponse>(`/api/competitors/${id}`, data),
+      apiClient.put<CompetitorResponse>(`/api/competitors/${id}`, data),
 
   /** PATCH — partial update. Does not touch status or statistics either. */
   patch: (id: string, data: PatchCompetitorInput) =>
-    apiClient.patch<CompetitorResponse>(`/api/competitors/${id}`, data),
+      apiClient.patch<CompetitorResponse>(`/api/competitors/${id}`, data),
 
   changeStatus: (id: string, status: CompetitorStatus) =>
-    apiClient.patch<CompetitorResponse>(`/api/competitors/${id}/status`, { status }),
+      apiClient.patch<CompetitorResponse>(`/api/competitors/${id}/status`, { status }),
 
-  /** Not a physical delete — sets status to RETIRED, preserving race history. */
-  retire: (id: string) => apiClient.delete(`/api/competitors/${id}`),
+  /** Logical delete — PATCH /{id}/retire. Sets status to RETIRED, preserving race history. Always allowed unless already retired. */
+  retire: (id: string) => apiClient.patch<void>(`/api/competitors/${id}/retire`, undefined),
+
+  /** Physical delete — DELETE /{id}. Only allowed when the competitor has no official race results (409 otherwise). */
+  delete: (id: string) => apiClient.delete(`/api/competitors/${id}`),
 };

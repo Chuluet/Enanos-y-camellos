@@ -86,6 +86,7 @@ public class RegistrationService {
         Race race = findRaceOrThrow(raceId);
         validateRaceIsOpenForRegistration(race);
         validateRegistrationTypeMatchesRaceType(race, request);
+        validateCapacityNotExceeded(race);
 
         RaceRegistration registration = request.isIndividual()
                 ? buildIndividualRegistration(race, request)
@@ -123,6 +124,13 @@ public class RegistrationService {
             throw new BadRequestException("This race only accepts teams");
         }
         // MIXED accepts either, nothing to check here.
+    }
+    private void validateCapacityNotExceeded(Race race) {
+        long currentCount = registrationRepository.countByRace_IdAndStatusIn(race.getId(), ACTIVE_STATUSES);
+        if (currentCount >= race.getMaxParticipants()) {
+            throw new ConflictException(
+                    "This race has reached its maximum of %d participants".formatted(race.getMaxParticipants()));
+        }
     }
 
     private RaceRegistration buildIndividualRegistration(Race race, RaceRegistrationRequest request) {

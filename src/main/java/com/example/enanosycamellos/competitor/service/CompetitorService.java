@@ -15,7 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.example.enanosycamellos.auditlog.service.AuditLogService;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,6 +34,7 @@ import java.util.UUID;
 public class CompetitorService {
 
     private final ICompetitorRepository competitorRepository;
+    private final AuditLogService auditLogService;
 
     // ============================== Read ===============================
 
@@ -45,6 +46,14 @@ public class CompetitorService {
      * (no filter / status only / type only / both) are resolved here, so the
      * controller stays a thin pass-through of {@code Pageable} plus two
      * optional query params.</p>
+     *
+     * <p>When no {@code status} is explicitly requested, retired competitors
+     * are excluded by default: {@code RETIRED} is a terminal, historical
+     * state (see {@link #retire}), not part of the active roster, so it
+     * shouldn't show up unless someone deliberately asks for it via
+     * {@code status=RETIRED}. Physically deleted competitors need no such
+     * handling — they're gone from the table entirely, so every query here
+     * already omits them for free.</p>
      */
     @Transactional(readOnly = true)
     public Page<CompetitorResponse> getCompetitors(CompetitorStatus status, CompetitorType type, Pageable pageable) {
@@ -55,9 +64,9 @@ public class CompetitorService {
         } else if (status != null) {
             page = competitorRepository.findAllByStatus(status, pageable);
         } else if (type != null) {
-            page = competitorRepository.findAllByCompetitorType(type, pageable);
+            page = competitorRepository.findAllByCompetitorTypeAndStatusNot(type, CompetitorStatus.RETIRED, pageable);
         } else {
-            page = competitorRepository.findAll(pageable);
+            page = competitorRepository.findAllByStatusNot(CompetitorStatus.RETIRED, pageable);
         }
 
         return page.map(CompetitorMapper::toResponse);
@@ -95,6 +104,9 @@ public class CompetitorService {
         Competitor competitor = CompetitorMapper.toEntity(request);
         Competitor saved = competitorRepository.save(competitor);
 
+        auditLogService.log("CREATE", "Competitor", saved.getId().toString(),
+                "Competitor '%s' created".formatted(saved.getNickname()));
+
         log.info("Competitor created id={} nickname={}", saved.getId(), saved.getNickname());
         return CompetitorMapper.toResponse(saved);
     }
@@ -128,6 +140,9 @@ public class CompetitorService {
         competitor.setOrigin(request.origin());
 
         Competitor updated = competitorRepository.save(competitor);
+
+        auditLogService.log("UPDATE", "Competitor", id.toString(), "Competitor data updated");
+
         log.info("Competitor updated id={}", id);
         return CompetitorMapper.toResponse(updated);
     }
@@ -156,36 +171,70 @@ public class CompetitorService {
                             .formatted(competitor.getNickname(), request.status()));
         }
 
+        CompetitorStatus previousStatus = competitor.getStatus();
         competitor.setStatus(request.status());
         Competitor updated = competitorRepository.save(competitor);
+
+        auditLogService.log("STATUS_CHANGE", "Competitor", id.toString(),
+                "Competitor status changed from %s to %s".formatted(previousStatus, request.status()),
+                previousStatus, request.status());
+
         log.info("Competitor id={} status changed to {}", id, request.status());
         return CompetitorMapper.toResponse(updated);
     }
 
     /**
-     * "Delete" a competitor. Per Module 2, one with official race results
-     * cannot be physically deleted — it must be retired instead, preserving
-     * its history. One with no official results has nothing to preserve, so
-     * it's removed outright.
+     * Logical delete: marks a competitor as RETIRED, preserving all its
+     * history. Always allowed regardless of race history — this is the
+     * "safe" removal action.
      *
-     * <p>Idempotent for already-retired competitors that do have history:
-     * calling this again just re-confirms RETIRED. A competitor that was
-     * already physically deleted simply won't be found anymore.</p>
+     * <p>RETIRED is terminal (see {@link #changeStatus}), so retiring an
+     * already-retired competitor is rejected instead of silently
+     * no-op'ing.</p>
      */
     @Transactional
     public void retire(UUID id) {
         Competitor competitor = competitorRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.of("Competitor", id));
 
+        if (competitor.getStatus() == CompetitorStatus.RETIRED) {
+            throw new ConflictException(
+                    "Competitor '%s' has already retired".formatted(competitor.getNickname()));
+        }
+
+        competitor.setStatus(CompetitorStatus.RETIRED);
+        competitorRepository.save(competitor);
+
+        auditLogService.log("RETIRE", "Competitor", id.toString(),
+                "Competitor '%s' retired".formatted(competitor.getNickname()));
+
+        log.info("Competitor retired id={}", id);
+    }
+
+    /**
+     * Physical delete: permanently removes the row. Per Module 2, a
+     * competitor with official race results cannot be physically deleted —
+     * that would silently erase history other records (results, standings)
+     * may still reference. Callers who hit this constraint should use
+     * {@link #retire} instead.
+     */
+    @Transactional
+    public void delete(UUID id) {
+        Competitor competitor = competitorRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.of("Competitor", id));
+
         if (hasOfficialResults(competitor)) {
-            competitor.setStatus(CompetitorStatus.RETIRED);
-            competitorRepository.save(competitor);
-            log.info("Competitor retired id={} (has official results)", id);
-            return;
+            throw new ConflictException(
+                    "Competitor '%s' has official race results and cannot be permanently deleted; retire them instead"
+                            .formatted(competitor.getNickname()));
         }
 
         competitorRepository.delete(competitor);
-        log.info("Competitor permanently deleted id={} (no official results)", id);
+
+        auditLogService.log("DELETE", "Competitor", id.toString(),
+                "Competitor '%s' permanently deleted".formatted(competitor.getNickname()));
+
+        log.info("Competitor permanently deleted id={}", id);
     }
 
     /**
@@ -239,7 +288,7 @@ public class CompetitorService {
         }
 
         Competitor updated = competitorRepository.save(competitor);
-        log.info("Competitor patched id={}", id);
+        auditLogService.log("UPDATE", "Competitor", id.toString(), "Competitor data partially updated");
         return CompetitorMapper.toResponse(updated);
     }
 }

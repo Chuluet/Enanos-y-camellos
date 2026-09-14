@@ -14,6 +14,8 @@ import { RaceDetailPage } from "./pages/races/RaceDetailPage";
 import { RaceFormPage } from "./pages/races/RaceFormPage";
 import { StandingsPage } from "./pages/standings/StandingsPage";
 import { AuditLogPage } from "./pages/auditlog/AuditLogPage";
+import {LoginPage} from "./pages/auth/LoginPage.tsx";
+import {RegisterPage} from "./pages/auth/RegistrationPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -121,6 +123,22 @@ export const router = createBrowserRouter([
                 element: (
                     <ProtectedRoute requiredRoles={["ADMINISTRATOR"]}>
                         <AuditLogPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "login",
+                element: (
+                    <ProtectedRoute requiredRoles={["ADMINISTRATOR"]}>
+                        <LoginPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "register",
+                element: (
+                    <ProtectedRoute requiredRoles={["ADMINISTRATOR"]}>
+                        <RegisterPage />
                     </ProtectedRoute>
                 ),
             },
