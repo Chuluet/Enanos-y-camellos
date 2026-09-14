@@ -15,6 +15,7 @@ public interface IRaceResultRepository extends JpaRepository<RaceResult, UUID> {
     Optional<RaceResult> findByRegistration_Id(UUID registrationId);
 
     boolean existsByRegistration_Id(UUID registrationId);
+    boolean existsByRegistration_Race_Id(UUID raceId);
 
     /**
      * Used for both "final positions cannot be duplicated" and "only one
